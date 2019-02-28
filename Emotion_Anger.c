@@ -1,0 +1,8 @@
+
+
+void fun()
+{
+ 
+ printf("test"); 
+  
+}  
