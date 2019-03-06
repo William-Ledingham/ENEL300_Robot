@@ -6,33 +6,22 @@
 #include <Robot_Main.h>
 
 /* -- Global Variables -- */
+ int lastIRCode = 0;
 
 
 
 int main()
 {
-  int state = 0;
-  int remoteCode;
-  sirc_setTimeout(50); // -1 if no remote code in 1s
+  
+  //int state = 0;
+  //int remoteCode;
+  int* coginfo = cog_run(&enableIRSensorCog, 128);
  
   while(1)
   {
-    remoteCode = -1;
-    remoteCode = sirc_button(7);
-    /* 21 - power button
-     * 16 - up arrow
-     * 17 - down arrow
-     * 19 - left arrow
-     * 18 - right arrow
-     * 20 - mute
-     * 37 - AV/TV
-    */
-    if(remoteCode != -1)
-    {
-      state = remoteCode;
-    }
+
     
-    switch(state)
+    switch(lastIRCode)
     {    
      case 16: //Emotion 1
       AngerDefault();
@@ -59,6 +48,28 @@ int main()
   }  
 }
 
+void enableIRSensorCog()
+{
+  while(1)
+  {
+    int remoteCode;
+    sirc_setTimeout(1000); // -1 if no remote code in 1s
+    remoteCode = -1;
+    remoteCode = sirc_button(7);
+    /* 21 - power button
+     * 16 - up arrow
+     * 17 - down arrow
+     * 19 - left arrow
+     * 18 - right arrow
+     * 20 - mute
+     * 37 - AV/TV
+    */
+    if(remoteCode != -1)
+    {
+      lastIRCode = remoteCode;
+    }
+  }    
+}  
 
 void setServo(int leftSpeed, int rightSpeed) 
 {

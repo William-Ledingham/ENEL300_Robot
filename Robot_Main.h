@@ -2,6 +2,7 @@
 #define Robot_Main_h
 
 /* Robot_Main.c ------------------------------------*/
+void enableIRSensorCog();
 void setServo(int leftSpeed, int rightSpeed);
 void setEyebrowAngle(int leftEye, int rightEye);
 
