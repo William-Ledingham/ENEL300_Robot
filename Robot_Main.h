@@ -7,7 +7,7 @@ void setEyebrowAngle(int leftEye, int rightEye);
 
 
 /* Emotion_Anger.c ---------------------------------*/
-void fun();
+void AngerDefault();
 
 
 #endif

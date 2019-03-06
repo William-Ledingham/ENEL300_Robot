@@ -1,8 +1,10 @@
 
 
-void fun()
+void AngerDefault()
 {
- 
- printf("test"); 
-  
+       printf("emotion 1 entered");
+
+      freqout(14, 1000, 500);
+
+
 }  
