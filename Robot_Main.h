@@ -23,6 +23,7 @@
 #define PIN_GYRO_TX 5 // connect to Gyro's RX Pin
 #define PIN_GYRO_RX 6 // connect to Gyro's TX Pin
 
+#define PIN_BUZZER 10
 
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
@@ -33,6 +34,7 @@ void setServo(int leftSpeed, int rightSpeed);     // speeds are roughly from 0 (
 void setEyebrowAngle(int leftEye, int rightEye);  // angles are tenths of a degree
 void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) to 255 (fully on)
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
+int isTilted();                                   // Returns true if tilted, false if not tilted
 
 /* Emotion_Anger.c ---------------------------------*/
 void AngerFSM();

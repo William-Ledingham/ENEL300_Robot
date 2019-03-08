@@ -61,20 +61,58 @@ void AngerFSM()
   switch(currentState) {
     case 0:
       // Default State within Anger
-      setEyeColors(230, 126,   34  );
-      freqout(14, 500, 800);
-      
-      if (emotionalState != ANGER) return;
-      
-      setEyeColors(128, 128, 0);
-      freqout(14, 500, 500);
+      setServo(50,50);
+      setEyebrowAngle(45, 45);
+      setEyeColors(255, 0, 0);
+      freqout(PIN_BUZZER, 500, 300);
+      if(getProxDistance() <= 30)
+      {
+       currentState = 1; 
+      }
+      else if(isTilted())
+      {
+       currentState = 2; 
+      }        
+            
+              
     break;
     
     case 1:
       // First Elevated State within Anger
+      // Triggered by Proximitty Sensor
       
+      setServo(100, 100);
+      
+      freqout(PIN_BUZZER, 300, 300);
+       
+      setEyeColors(0, 0, 0);
+      pause(250);
+      
+      if(getProxDistance() > 30)
+      {
+       currentState = 0; 
+      }            
     break;
     
+    case 2:
+      setServo(0, 0);
+      for(int i = 300; i <= 600; i += 20)
+      {
+        if (emotionalState != ANGER) return;
+        setEyeColors(255, 0, 0);
+        freqout(PIN_BUZZER, 250, i);
+        setEyeColors(0, 0, 0);
+        pause(250);
+        if(!isTilted())
+        {
+          currentState = 0;
+          break;
+        }          
+         
+       
+      }
+    
+    break;
   }    
 
   
@@ -172,7 +210,11 @@ float getProxDistance() {
   return flightTime / 58.0;
   
 }  
-  
+
+int isTilted()
+{
+ return 0; 
+}  
 
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
