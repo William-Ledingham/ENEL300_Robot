@@ -94,7 +94,7 @@ void IRSensorCog()
   int remoteCode;
   while(1)
   {
-    sirc_setTimeout(100); // -1 if no remote code in 1s
+    sirc_setTimeout(100); // -1 if no remote code in timeout period (arg)
     remoteCode = -1;
     remoteCode = sirc_button(7);
     /* 21 - power button
@@ -141,16 +141,26 @@ void IRSensorCog()
   }    
 }  
 
+// Input Functions
+float getProxDistance() {
+  // Returns the distance in cm to the nearest object
+  pulse_out(PIN_PROX_TRIG, 20); // 20us pulse to trigger sensor (min 10us)
+  float distance = pulse_in(PIN_PROX_ECHO, 1); // get length of pulse (HIGH) returned from sensor (in us)
+  return distance / 58.0;
+  
+}  
+  
 
+// Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
 {
   servo_speed(SERVO_DRIVE_L, -leftSpeed);
   servo_speed(SERVO_DRIVE_R, rightSpeed);
 }
 
-/* Arguments take angle from -900 to 900 */
 void setEyebrowAngle(int leftEye, int rightEye)
 { 
+  // Arguments take angle from -900 to 900
   servo_angle(SERVO_EYEBROW_L,  leftEye + 900);
   servo_angle(SERVO_EYEBROW_R, 900 - rightEye);
 }
@@ -160,7 +170,7 @@ void setEyeColors(int r, int g, int b)
   eyeR = r;
   eyeG = g;
   eyeB = b;
-}  
+}
 
 void pwmEyeCog() {
   int dutyResolutionTime = 1; // in ms
