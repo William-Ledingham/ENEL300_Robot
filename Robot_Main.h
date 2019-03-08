@@ -20,6 +20,9 @@
 #define PIN_PROX_TRIG 3
 #define PIN_PROX_ECHO 4
 
+#define PIN_GYRO_TX 5 // connect to Gyro's RX Pin
+#define PIN_GYRO_RX 6 // connect to Gyro's TX Pin
+
 
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
