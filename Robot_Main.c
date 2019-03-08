@@ -6,10 +6,10 @@
 #include <Robot_Main.h>
 
 /* -- Global Variables -- */
- int lastIRCode = 0;
- int emotionalState = 0;
+volatile int lastIRCode = 0;
+volatile int emotionalState = 0;
  
- int eyeR = 0, eyeG = 0, eyeB = 0;
+volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 
 
 
@@ -147,11 +147,11 @@ void IRSensorCog()
 
 // Input Functions
 float getProxDistance() {
-  // Returns the distance in cm to the nearest object, or -1 for no object
+  // Returns the distance in cm to the nearest object (max 38ms), or -1 for no object
   pulse_out(PIN_PROX_TRIG, 20); // 20us pulse to trigger sensor (min 10us)
-  float distance = pulse_in(PIN_PROX_ECHO, 1); // get length of pulse (HIGH) returned from sensor (in us)
-  if (distance > 37000) return -1;
-  return distance / 58.0;
+  float flightTime = pulse_in(PIN_PROX_ECHO, 1); // get length of pulse (HIGH) returned from sensor (in us)
+  if (flightTime > 37000) return -1;
+  return flightTime / 58.0;
   
 }  
   
