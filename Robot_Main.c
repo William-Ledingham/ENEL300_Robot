@@ -2,6 +2,8 @@
 #include "servo.h"
 #include "stdio.h"
 #include "sirc.h"
+#include "serial.h" // for serial communication with Arduino/gyro
+#include "fdserial.h"
 
 #include <Robot_Main.h>
 
@@ -12,22 +14,30 @@ volatile int currentState = 0; // current state within each emotional state mach
  
 volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 
+volatile fdserial *gyroSerial;
 
 
 int main()
 {
+  print("Main Started.\n");
   
-  //int state = 0;
-  //int remoteCode;
+  // Open Gyro Serial Connection
+  gyroSerial = serial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
+  
+  // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
   int* EyeCogInfo = cog_run(&pwmEyeCog, 128);
   
-  print("Main Started.\n");
- 
+  // Trigger Emotional FSM's
   while(1)
   {
     switch(emotionalState)
     {    
+     case DEFAULT_EMOTION:
+      DefaultFSM();
+      
+     break;
+     
      case ANGER: //Emotion 1
       AngerFSM();
      break;
@@ -82,6 +92,14 @@ void AngerFSM()
 
 }  
 
+void DefaultFSM() {
+  setEyeColors(20, 20, 20);
+  pause(100);
+  setEyeColors(0, 0, 0);
+  pause(500);
+  
+}  
+
 void FearFSM() {
   print("Fear Emotion Started.\n");
   setEyeColors(0, 100, 0);
@@ -95,6 +113,8 @@ void SadnessFSM() {
   setEyeColors(0, 0, 100);
   
   pause(500);
+  
+  gyroLoggingCog();
 }  
 
 
@@ -219,4 +239,17 @@ void pwmEyeCog() {
       
     } // end for
   } // end while
-}            
+}
+
+void gyroLoggingCog() {
+  //print("Gyro: ");
+  //print("%s\n", readStr(gyroSerial, 0, 10));
+  //while (serial_rxChar(gyroSerial) == '=') serial_rxChar(gyroSerial);
+  char c;
+  
+  do {
+    c = serial_rxChar(gyroSerial);
+    if (c != -1)
+      print("%c", c);
+    }   while (c != -1);    
+}  

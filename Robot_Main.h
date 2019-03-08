@@ -2,6 +2,7 @@
 #define Robot_Main_h
 
 /* Emotional States --------------------------------*/
+#define DEFAULT_EMOTION 0
 #define ANGER 1
 #define SADNESS 2
 #define FEAR 3
@@ -27,6 +28,7 @@
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
 void pwmEyeCog();
+void gyroLoggingCog();
 
 // Sensor and Control Functions
 void setServo(int leftSpeed, int rightSpeed);     // speeds are roughly from 0 (off) to 100 (full speed)
@@ -35,6 +37,7 @@ void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) t
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
 
 /* Emotion_Anger.c ---------------------------------*/
+void DefaultFSM();
 void AngerFSM();
 void FearFSM();
 void SadnessFSM();
