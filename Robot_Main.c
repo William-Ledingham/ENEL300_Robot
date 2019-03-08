@@ -71,26 +71,30 @@ void AngerFSM()
   switch(currentState) {
     case 0:
       // Default State within Anger
-      setServo(50,50);
-      setEyebrowAngle(45, 45);
-      setEyeColors(255, 0, 0);
-      freqout(PIN_BUZZER, 500, 300);
+      setServo(10,-10);
+      setEyebrowAngle(450, 450);
+      setEyeColors(250, 0, 0);
+      
+      
       if(getProxDistance() <= 30)
       {
        currentState = 1; 
-      }
+       printf("ProxDistance");
+      }/*
       else if(isTilted())
       {
        currentState = 2; 
+        printf("isTilted");
+
       }        
-            
+          */  
               
     break;
     
     case 1:
       // First Elevated State within Anger
       // Triggered by Proximitty Sensor
-      
+      setEyeColors(250, 0 ,0);
       setServo(100, 100);
       
       freqout(PIN_BUZZER, 300, 300);
@@ -109,7 +113,7 @@ void AngerFSM()
       for(int i = 300; i <= 600; i += 20)
       {
         if (emotionalState != ANGER) return;
-        setEyeColors(255, 0, 0);
+        setEyeColors(250, 0, 0);
         freqout(PIN_BUZZER, 250, i);
         setEyeColors(0, 0, 0);
         pause(250);
