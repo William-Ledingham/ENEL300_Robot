@@ -16,7 +16,7 @@ int main()
   
   //int state = 0;
   //int remoteCode;
-  int* coginfo = cog_run(&enableIRSensorCog, 2000);
+  int* coginfo = cog_run(&IRSensorCog, 2000);
  
   while(1)
   {
@@ -67,7 +67,7 @@ void SadnessFSM() {
   printf("Sadness Emotion Started.\n");
 }  
 
-void enableIRSensorCog()
+void IRSensorCog()
 {
   int remoteCode;
   while(1)
