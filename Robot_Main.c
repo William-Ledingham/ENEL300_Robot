@@ -9,7 +9,7 @@
  int lastIRCode = 0;
  int emotionalState = 0;
  
- int eyeR, eyeG, eyeB;
+ int eyeR = 0, eyeG = 0, eyeB = 0;
 
 
 
@@ -55,28 +55,32 @@ int main()
 
 void AngerFSM()
 {
-      print("Anger Emotion Started.\n");
+  print("Anger Emotion Started.\n");
 
-      freqout(14, 500, 800);
-      setEyeColors(230, 126, 34);
-      
-      if (emotionalState != ANGER) return;
-      
-      freqout(14, 500, 500);
-      setEyeColors(128, 128, 0);
+  setEyeColors(230, 126, 34);
+  freqout(14, 500, 800);
+  
+  if (emotionalState != ANGER) return;
+  
+  setEyeColors(128, 128, 0);
+  freqout(14, 500, 500);
 
 
 }  
 
 void FearFSM() {
   print("Fear Emotion Started.\n");
-  setEyeColors(0, 0, 100);
+  setEyeColors(0, 100, 0);
+  
+  pause(500);
 }  
 
 
 void SadnessFSM() {
   print("Sadness Emotion Started.\n");
   setEyeColors(0, 0, 100);
+  
+  pause(500);
 }  
 
 
@@ -108,7 +112,7 @@ void IRSensorCog()
     if(remoteCode != -1)
     {
       lastIRCode = remoteCode;
-      print("New IR Code sensed: %d.\n", lastIRCode);
+      //print("New IR Code sensed: %d.\n", lastIRCode);
       
       switch(lastIRCode)
       {    
@@ -143,9 +147,10 @@ void IRSensorCog()
 
 // Input Functions
 float getProxDistance() {
-  // Returns the distance in cm to the nearest object
+  // Returns the distance in cm to the nearest object, or -1 for no object
   pulse_out(PIN_PROX_TRIG, 20); // 20us pulse to trigger sensor (min 10us)
   float distance = pulse_in(PIN_PROX_ECHO, 1); // get length of pulse (HIGH) returned from sensor (in us)
+  if (distance > 37000) return -1;
   return distance / 58.0;
   
 }  
@@ -176,7 +181,6 @@ void pwmEyeCog() {
   int dutyResolutionTime = 1; // in ms
   
   while (1) {
-    print("%d %d %d\n", eyeR, eyeG, eyeB);
     for (int i = 0; i < 255; i++) {
       if (i >= eyeR) 
         high(PIN_EYE_R);

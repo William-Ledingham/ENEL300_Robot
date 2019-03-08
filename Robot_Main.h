@@ -29,7 +29,7 @@ void pwmEyeCog();
 void setServo(int leftSpeed, int rightSpeed);     // speeds are roughly from 0 (off) to 100 (full speed)
 void setEyebrowAngle(int leftEye, int rightEye);  // angles are tenths of a degree
 void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) to 255 (fully on)
-float getProxDistance();                          // Returns the distance in cm to the nearest object
+float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
 
 /* Emotion_Anger.c ---------------------------------*/
 void AngerFSM();
