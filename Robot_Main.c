@@ -8,6 +8,7 @@
 /* -- Global Variables -- */
 volatile int lastIRCode = 0;
 volatile int emotionalState = 0;
+volatile int currentState = 0; // current state within each emotional state machine
  
 volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 
@@ -56,14 +57,27 @@ int main()
 void AngerFSM()
 {
   print("Anger Emotion Started.\n");
+  
+  switch(currentState) {
+    case 0:
+      // Default State within Anger
+      setEyeColors(230, 126,   34  );
+      freqout(14, 500, 800);
+      
+      if (emotionalState != ANGER) return;
+      
+      setEyeColors(128, 128, 0);
+      freqout(14, 500, 500);
+    break;
+    
+    case 1:
+      // First Elevated State within Anger
+      
+    break;
+    
+  }    
 
-  setEyeColors(230, 126, 34);
-  freqout(14, 500, 800);
   
-  if (emotionalState != ANGER) return;
-  
-  setEyeColors(128, 128, 0);
-  freqout(14, 500, 500);
 
 
 }  
@@ -119,20 +133,24 @@ void IRSensorCog()
        case 16: //Emotion 1
         //AngerDefault();
         emotionalState = ANGER;
+        currentState = 0;
        break;
        
        case 17: //Emotion 2
         emotionalState = SADNESS;
+        currentState = 0;
        
        break;
        
        case 19: //Emotion 3
         emotionalState = FEAR;
+        currentState = 0;
        
        break;
        
        case 18: //Emotion 4
         emotionalState = LOVE;
+        currentState = 0;
        
        break;
        
