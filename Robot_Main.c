@@ -20,7 +20,7 @@ volatile float gyroX, gyroY, gyroZ, gyroT; // x, y, y, and total tilt as sum (up
 volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 20 seconds/80 values, newest at History[0]
 
 // Device Globals
-volatile fdserial *gyroSerial;
+fdserial *gyroSerial;
 
 // Overall Settings
 const float tiltThreshold = 15;
@@ -75,34 +75,37 @@ int main()
 
 void AngerFSM()
 {
-  print("Anger Emotion Started.\n");
+  print("Anger Emotion Started (State=%d)\n", currentState);
   
   switch(currentState) {
     case 0:
       // Default State within Anger
+      
+      // State Actions
       setServo(10,-10);
       setEyebrowAngle(450, 450);
       setEyeColors(250, 0, 0);
       
-      
-      if(getProxDistance() <= 30)
+      // Next State Logic
+      if(getProxDistance() <= 30 && getProxDistance() != -1)
       {
        currentState = 1; 
-       printf("ProxDistance");
-      }/*
-      else if(isTilted())
+       printf("\tProximity Triggered (in Anger).\n");
+      }
+      if(getTiltStatus())
       {
        currentState = 2; 
-        printf("isTilted");
+       printf("\tTilt Triggered (in Anger).\n");
 
-      }        
-          */  
+      }
               
     break;
     
     case 1:
       // First Elevated State within Anger
-      // Triggered by Proximitty Sensor
+      // Triggered by Proximity Sensor
+      
+      // State Actions
       setEyeColors(250, 0 ,0);
       setServo(100, 100);
       
@@ -111,25 +114,40 @@ void AngerFSM()
       setEyeColors(0, 0, 0);
       pause(250);
       
-      if(getProxDistance() > 30)
+      // Next State Logic
+      if(getProxDistance() > 30 || getProxDistance() == -1)
       {
-       currentState = 0; 
-      }            
+       currentState = 0;
+      }
+      
+      if(getTiltStatus())
+      {
+       currentState = 2; 
+       printf("\tTilt Triggered (in Anger).\n");
+
+      }
+      
     break;
     
     case 2:
+      // Second Elevated State within Anger
+      // Triggered by Tilt Sensor
+      
+      // State Actions
       setServo(0, 0);
-      for(int i = 300; i <= 600; i += 20)
+      for(int buzzerFreq = 300; buzzerFreq <= 600; buzzerFreq += 20)
       {
         if (emotionalState != ANGER) return;
         setEyeColors(250, 0, 0);
-        freqout(PIN_BUZZER, 250, i);
+        freqout(PIN_BUZZER, 250, buzzerFreq);
         setEyeColors(0, 0, 0);
         pause(250);
+        
+        // Next State (Break Out) Logic
         if(!getTiltStatus())
         {
           currentState = 0;
-          break;
+          break; // break out of for loop
         }          
          
        
@@ -144,10 +162,17 @@ void AngerFSM()
 }  
 
 void DefaultFSM() {
+  print("Default State FSM Started.\n");
+  
   setEyeColors(20, 20, 20);
   pause(100);
   setEyeColors(0, 0, 0);
   pause(500);
+  
+  // Print out Gyro History (debugging)
+  for (int i = 0; i < GYRO_HISTORY_COUNT; i++)
+    printf("%f,", gyroXHistory[i]);
+  printf("\n");
   
 }  
 
@@ -239,7 +264,7 @@ float getProxDistance() {
   // Returns the distance in cm to the nearest object (max 38ms), or -1 for no object
   pulse_out(PIN_PROX_TRIG, 20); // 20us pulse to trigger sensor (min 10us)
   float flightTime = pulse_in(PIN_PROX_ECHO, 1); // get length of pulse (HIGH) returned from sensor (in us)
-  if (flightTime > 37000) return -1;
+  if (flightTime > 37000 || flightTime <= 0) return -1;
   return flightTime / 58.0;
   
 }  
@@ -271,9 +296,7 @@ void setEyeColors(int r, int g, int b)
   eyeB = b;
 }
 
-void pwmEyeCog() {
-  int dutyResolutionTime = 1; // in ms
-  
+void pwmEyeCog() {  
   while (1) {
     for (int i = 0; i < 255; i++) {
       if (i >= eyeR) 
@@ -302,8 +325,9 @@ void gyroLoggingCog() {
      // Read the Values
      dscan(gyroSerial, "%f,%f,%f,%f", &gyroX, &gyroY, &gyroZ, &gyroT);
      
+
      // Shift Values in Array Right
-     for (int i = GYRO_HISTORY_COUNT; i > 0; i++) {
+     for (int i = GYRO_HISTORY_COUNT-1; i > 0; i--) {
        gyroXHistory[i] = gyroXHistory[i-1];
        gyroYHistory[i] = gyroYHistory[i-1];
        gyroTHistory[i] = gyroTHistory[i-1];
@@ -313,7 +337,8 @@ void gyroLoggingCog() {
      gyroXHistory[0] = gyroX;
      gyroYHistory[0] = gyroY;
      gyroTHistory[0] = gyroT;       
-   }     
+        
    
+   }     
    
 }  
