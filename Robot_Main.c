@@ -170,9 +170,11 @@ void DefaultFSM() {
   pause(500);
   
   // Print out Gyro History (debugging)
+  /*
   for (int i = 0; i < GYRO_HISTORY_COUNT; i++)
     printf("%f,", gyroXHistory[i]);
   printf("\n");
+  */
   
 }  
 
