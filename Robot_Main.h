@@ -26,6 +26,11 @@
 
 #define PIN_BUZZER 10
 
+
+/* Other Macros ------------------------------------*/
+#define GYRO_HISTORY_COUNT 80
+
+
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
 void pwmEyeCog();
@@ -36,7 +41,7 @@ void setServo(int leftSpeed, int rightSpeed);     // speeds are roughly from 0 (
 void setEyebrowAngle(int leftEye, int rightEye);  // angles are tenths of a degree
 void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) to 255 (fully on)
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
-int isTilted();                                   // Returns true if tilted, false if not tilted
+int getTiltStatus();                              // Returns true if tilted, false if not tilted
 
 /* Emotion_Anger.c ---------------------------------*/
 void DefaultFSM();

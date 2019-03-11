@@ -2,31 +2,40 @@
 #include "servo.h"
 #include "stdio.h"
 #include "sirc.h"
-#include "serial.h" // for serial communication with Arduino/gyro
-#include "fdserial.h"
+#include "fdserial.h" // for serial communication with Arduino/gyro
 
 #include <Robot_Main.h>
 
 /* -- Global Variables -- */
+// State Codes
 volatile int lastIRCode = 0;
 volatile int emotionalState = 0;
 volatile int currentState = 0; // current state within each emotional state machine
- 
+
+// Output Globals
 volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 
+// Input Globals
+volatile float gyroX, gyroY, gyroZ, gyroT; // x, y, y, and total tilt as sum (updated 4 times per second), all in signed degrees
+volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 20 seconds/80 values, newest at History[0]
+
+// Device Globals
 volatile fdserial *gyroSerial;
 
+// Overall Settings
+const float tiltThreshold = 15;
 
 int main()
 {
   print("Main Started.\n");
   
   // Open Gyro Serial Connection
-  gyroSerial = serial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
+  gyroSerial = fdserial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
   
   // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
   int* EyeCogInfo = cog_run(&pwmEyeCog, 128);
+  int* GyroCogInfo = cog_run(&gyroLoggingCog, 128);
   
   // Trigger Emotional FSM's
   while(1)
@@ -117,7 +126,7 @@ void AngerFSM()
         freqout(PIN_BUZZER, 250, i);
         setEyeColors(0, 0, 0);
         pause(250);
-        if(!isTilted())
+        if(!getTiltStatus())
         {
           currentState = 0;
           break;
@@ -235,9 +244,10 @@ float getProxDistance() {
   
 }  
 
-int isTilted()
+int getTiltStatus()
 {
- return 0; 
+  // 1 if tilted, 0 if not
+  return gyroT > tiltThreshold; 
 }  
 
 // Output Functions
@@ -288,14 +298,22 @@ void pwmEyeCog() {
 }
 
 void gyroLoggingCog() {
-  //print("Gyro: ");
-  //print("%s\n", readStr(gyroSerial, 0, 10));
-  //while (serial_rxChar(gyroSerial) == '=') serial_rxChar(gyroSerial);
-  char c;
-  
-  do {
-    c = serial_rxChar(gyroSerial);
-    if (c != -1)
-      print("%c", c);
-    }   while (c != -1);    
+   while (1) {
+     // Read the Values
+     dscan(gyroSerial, "%f,%f,%f,%f", &gyroX, &gyroY, &gyroZ, &gyroT);
+     
+     // Shift Values in Array Right
+     for (int i = GYRO_HISTORY_COUNT; i > 0; i++) {
+       gyroXHistory[i] = gyroXHistory[i-1];
+       gyroYHistory[i] = gyroYHistory[i-1];
+       gyroTHistory[i] = gyroTHistory[i-1];
+     }
+     
+     // Add current value at [0]
+     gyroXHistory[0] = gyroX;
+     gyroYHistory[0] = gyroY;
+     gyroTHistory[0] = gyroT;       
+   }     
+   
+   
 }  
