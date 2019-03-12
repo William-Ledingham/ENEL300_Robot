@@ -73,6 +73,23 @@ int main()
   }  
 }
 
+void DefaultFSM() {
+  print("Default State FSM Started.\n");
+  
+  setEyeColors(20, 20, 20);
+  pause(100);
+  setEyeColors(0, 0, 0);
+  pause(500);
+  
+  // Print out Gyro History (debugging)
+  /*
+  for (int i = 0; i < GYRO_HISTORY_COUNT; i++)
+    printf("%f,", gyroXHistory[i]);
+  printf("\n");
+  */
+  
+}  
+
 void AngerFSM()
 {
   print("Anger Emotion Started (State=%d)\n", currentState);
@@ -161,23 +178,6 @@ void AngerFSM()
 
 }  
 
-void DefaultFSM() {
-  print("Default State FSM Started.\n");
-  
-  setEyeColors(20, 20, 20);
-  pause(100);
-  setEyeColors(0, 0, 0);
-  pause(500);
-  
-  // Print out Gyro History (debugging)
-  /*
-  for (int i = 0; i < GYRO_HISTORY_COUNT; i++)
-    printf("%f,", gyroXHistory[i]);
-  printf("\n");
-  */
-  
-}  
-
 void FearFSM() {
   print("Fear Emotion Started.\n");
   setEyeColors(0, 100, 0);
@@ -191,8 +191,6 @@ void SadnessFSM() {
   setEyeColors(0, 0, 100);
   
   pause(500);
-  
-  gyroLoggingCog();
 }  
 
 

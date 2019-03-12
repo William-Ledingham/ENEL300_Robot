@@ -22,7 +22,9 @@
 #define PIN_PROX_ECHO 4
 
 #define PIN_GYRO_TX 5 // connect to Gyro's RX Pin
-#define PIN_GYRO_RX 6 // connect to Gyro's TX Pin
+#define PIN_GYRO_RX 6 // connect to Gyro's TX Pin (Yellow)
+// Gyro: Green to +3.3v, Blue to GND
+// Gyro must be connected for program to function
 
 #define PIN_BUZZER 10
 
