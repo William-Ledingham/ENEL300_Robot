@@ -44,6 +44,7 @@ void setEyebrowAngle(int leftEye, int rightEye);  // angles are tenths of a degr
 void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) to 255 (fully on)
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
 int getTiltStatus();                              // Returns true if tilted, false if not tilted
+void zeroOutputs();								  // zero all LED/Servo outputs for reset of states
 
 /* Emotion_Anger.c ---------------------------------*/
 void DefaultFSM();

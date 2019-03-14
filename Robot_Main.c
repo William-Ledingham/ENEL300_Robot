@@ -32,11 +32,13 @@ int main()
   // Open Gyro Serial Connection
   gyroSerial = fdserial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
   
+  zeroOutputs();  
+  
   // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
   int* EyeCogInfo = cog_run(&pwmEyeCog, 128);
   int* GyroCogInfo = cog_run(&gyroLoggingCog, 128);
-  
+   
   // Trigger Emotional FSM's
   while(1)
   {
@@ -223,7 +225,7 @@ void IRSensorCog()
     {
       lastIRCode = remoteCode;
       //print("New IR Code sensed: %d.\n", lastIRCode);
-      
+      zeroOutputs();
       switch(lastIRCode)
       {    
        case 16: //Emotion 1
@@ -257,6 +259,13 @@ void IRSensorCog()
     
     }
   }    
+}  
+
+void zeroOutputs()
+{
+  setServo(0,0);
+  setEyebrowAngle(0,0);
+  setEyeColors(0,0,0);
 }  
 
 // Input Functions
