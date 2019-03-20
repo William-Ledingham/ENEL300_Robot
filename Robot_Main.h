@@ -7,6 +7,7 @@
 #define SADNESS 2
 #define FEAR 3
 #define LOVE 4
+#define TEST_MODE 5
 
 /* Pin Definitions ---------------------------------*/
 #define PIN_EYE_R 2
@@ -49,7 +50,7 @@ void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) t
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
 int getTiltStatus();                              // Returns true if tilted, false if not tilted
 float getTimeSinceMic();                          // Returns number of seconds since microphone last triggered
-void zeroOutputs();								  // zero all LED/Servo outputs for reset of states
+void resetOutputs();								          // zero all LED/Servo outputs for reset of states
 
 /* Emotion_Anger.c ---------------------------------*/
 void DefaultFSM();
@@ -57,5 +58,6 @@ void AngerFSM();
 void FearFSM();
 void SadnessFSM();
 void LoveFSM();
+void TestFSM();
 
 #endif

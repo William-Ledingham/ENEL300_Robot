@@ -44,7 +44,7 @@ int main()
   adc_init(21, 20, 19, 18);
   
   // Reset all Outputs to Default Setting
-  zeroOutputs();
+  resetOutputs();
   
   // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
@@ -76,6 +76,10 @@ int main()
      
      case LOVE: //Emotion 4
       LoveFSM();
+     break;
+     
+     case TEST_MODE: //Test Mode
+      TestFSM();
      break;
      
      default:
@@ -112,10 +116,10 @@ void DefaultFSM() {
   */
 
   // Microphone Testing
-  
+  /*
   printf("\tTime of Last Mic: %f\n", micLastTrig);
   printf("\tTime Since Last Mic: %f\n", getTimeSinceMic());
-  
+  */
 }  
 
 void AngerFSM()
@@ -231,6 +235,89 @@ void LoveFSM() {
   pause(1000);
 }  
 
+void TestFSM() {
+  // Test Mode for Testing IO Devices
+  
+  printf("Test Mode Started.\n");
+  
+  switch (currentState) {
+  
+    // Gyro Testing
+    case 0:
+    printf("Gyroscope Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tTry tilting robot. Current Gyroscope Result: ");
+        if (getTiltStatus())
+          printf("Tilted.\n");
+        else
+          printf("Not Tilted.\n");
+          
+        pause(1000);
+      }
+    break;
+    
+    case 1:  
+      // Microphone Testing
+      printf("Microphone Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tMake loud noise. Time since last microphone trigger: %fs.\n", getTimeSinceMic());
+        pause(2000);
+      }
+    break;
+    
+    case 2:
+      // Prox Sensor Testing
+      printf("Proximity Sensor Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tGet near robot sensor.  Distance to object: %fcm.\n", getProxDistance());
+        pause(2000);
+      }        
+    break;
+    
+    case 3:
+      // RGB LED Output Testing
+      printf("RGB LED Test:\n");
+      
+      printf("\tStarting RED Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(i, 0, 0);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(i, 0, 0);
+        pause(10);
+      }
+              
+      printf("\tStarting GREEN Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(0, i, 0);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(0, i, 0);
+        pause(10);
+      }
+              
+      printf("\tStarting BLUE Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(0, 0, i);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(0, 0, i);
+        pause(10);
+      }
+              
+      setEyeColors(0,0,0);
+      
+    break;
+    
+  }    
+    
+  // Increase currentState
+  currentState = (currentState+1) % 4; // currentState+1, mod (max state number + 1)
+}  
+
 void IRSensorCog()
 {
   int remoteCode;
@@ -251,7 +338,7 @@ void IRSensorCog()
     {
       lastIRCode = remoteCode;
       //print("New IR Code sensed: %d.\n", lastIRCode);
-      zeroOutputs();
+      resetOutputs();
       switch(lastIRCode)
       {    
        case 16: //Emotion 1
@@ -278,6 +365,12 @@ void IRSensorCog()
        
        break;
        
+       case 20: // Test Mode (Mute)
+        emotionalState = TEST_MODE;
+        currentState = 0;
+        
+       break;
+       
        default:
         emotionalState = 0;
        break;
@@ -287,7 +380,7 @@ void IRSensorCog()
   }    
 }  
 
-void zeroOutputs()
+void resetOutputs()
 {
   setServo(0,0);
   setEyebrowAngle(0,0);
