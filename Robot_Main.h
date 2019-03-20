@@ -28,6 +28,9 @@
 
 #define PIN_BUZZER 10
 
+#define PIN_MIC_AD 2
+// Connect AUD to PIN_MIC_AD, Vcc to 3.3v, GND to GND
+
 
 /* Other Macros ------------------------------------*/
 #define GYRO_HISTORY_COUNT 80
@@ -37,6 +40,7 @@
 void IRSensorCog();
 void pwmEyeCog();
 void gyroLoggingCog();
+void micCog();
 
 // Sensor and Control Functions
 void setServo(int leftSpeed, int rightSpeed);     // speeds are roughly from 0 (off) to 100 (full speed)
@@ -44,6 +48,7 @@ void setEyebrowAngle(int leftEye, int rightEye);  // angles are tenths of a degr
 void setEyeColors(int r, int g, int b);           // rgb are ints from 0 (off) to 255 (fully on)
 float getProxDistance();                          // Returns the distance in cm to the nearest object, or -1 for no object
 int getTiltStatus();                              // Returns true if tilted, false if not tilted
+float getTimeSinceMic();                          // Returns number of seconds since microphone last triggered
 void zeroOutputs();								  // zero all LED/Servo outputs for reset of states
 
 /* Emotion_Anger.c ---------------------------------*/

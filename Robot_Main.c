@@ -3,6 +3,8 @@
 #include "stdio.h"
 #include "sirc.h"
 #include "fdserial.h" // for serial communication with Arduino/gyro
+#include "adcDCpropab.h" // for AD analog/digital reading
+#include "mstimer.h" // for timing, mostly for mic
 
 #include <Robot_Main.h>
 
@@ -18,26 +20,37 @@ volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 // Input Globals
 volatile float gyroX, gyroY, gyroZ, gyroT; // x, y, y, and total tilt as sum (updated 4 times per second), all in signed degrees
 volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 20 seconds/80 values, newest at History[0]
+volatile float micLastTrig = 0; // time in seconds microphone was last triggered
 
 // Device Globals
 fdserial *gyroSerial;
 
 // Overall Settings
 const float tiltThreshold = 15;
+const float micPeriod = 0.33; // period in s; 3Hz sampling (measure pk-pk this often)
+const int micThresholdPk = 2; // pk-pk threshold (volts)
 
 int main()
 {
   print("Main Started.\n");
   
+  // Start timer
+  mstime_start();
+  
   // Open Gyro Serial Connection
   gyroSerial = fdserial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
   
-  zeroOutputs();  
+  // Open A/D Connection
+  adc_init(21, 20, 19, 18);
+  
+  // Reset all Outputs to Default Setting
+  zeroOutputs();
   
   // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
   int* EyeCogInfo = cog_run(&pwmEyeCog, 128);
   int* GyroCogInfo = cog_run(&gyroLoggingCog, 128);
+  int* MicCogInfo = cog_run(&micCog, 128);
    
   // Trigger Emotional FSM's
   while(1)
@@ -89,6 +102,19 @@ void DefaultFSM() {
     printf("%f,", gyroXHistory[i]);
   printf("\n");
   */
+  
+  // Print out Microphone ADC (development/debugging)
+  /*
+  for (int i = 0; i < 50; i++)
+    printf("%f\t", adc_volts(PIN_MIC_AD));
+    
+  printf("\n");
+  */
+
+  // Microphone Testing
+  
+  printf("\tTime of Last Mic: %f\n", micLastTrig);
+  printf("\tTime Since Last Mic: %f\n", getTimeSinceMic());
   
 }  
 
@@ -282,7 +308,12 @@ int getTiltStatus()
 {
   // 1 if tilted, 0 if not
   return gyroT > tiltThreshold; 
-}  
+}
+
+float getTimeSinceMic() {
+  // Returns the number of seconds since the microphone was last triggered
+  return mstime_get()/1000.0 - micLastTrig; // current time - mic last trig time
+}
 
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
@@ -333,7 +364,7 @@ void gyroLoggingCog() {
    while (1) {
      // Read the Values
      dscan(gyroSerial, "%f,%f,%f,%f", &gyroX, &gyroY, &gyroZ, &gyroT);
-     
+     //printf("\tRead Gyro: %f,%f,%f,%f", gyroX, gyroY, gyroZ, gyroT); // Run from cog, will fail
 
      // Shift Values in Array Right
      for (int i = GYRO_HISTORY_COUNT-1; i > 0; i--) {
@@ -351,3 +382,41 @@ void gyroLoggingCog() {
    }     
    
 }  
+
+void micCog() {
+  float max, min, maxPkPk, read;
+  float startTime;
+  
+  while (1) {
+    
+    // Set Extreme Initial Values
+    max = -1000;
+    min = 1000;
+    maxPkPk = 0;
+    
+    read = adc_volts(PIN_MIC_AD);
+   
+    startTime = mstime_get() / 1000.0;
+    
+    // Record the highest and lowest mic values for a while (micPeriod)
+    while (mstime_get()/1000.0 - startTime < micPeriod)
+    {
+      read = adc_volts(PIN_MIC_AD);
+      
+      if (read > max)
+        max = read;
+      else if (read < min)
+        min = read;
+        
+    }
+    
+    // After reading a full period of values, determine pk-pk value
+    maxPkPk = max - min;
+    
+    if (maxPkPk > micThresholdPk) {
+      //printf("NEW MICROPHONE TRIGGER, pk-pk=%f\n", maxPkPk); // should fail because inside cog
+      micLastTrig = mstime_get()/1000.0; // set time to the current trigger time
+      
+    }    
+  }
+}
