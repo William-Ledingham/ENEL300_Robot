@@ -269,7 +269,7 @@ void TestFSM() {
       // Prox Sensor Testing
       printf("Proximity Sensor Test:\n");
       for (int i = 0; i < 5; i++) {
-        printf("\tGet near robot sensor.  Distance to object: %fcm.\n", getProxDistance());
+        printf("\tGet near proximity sensor.  Distance to object: %fcm.\n", getProxDistance());
         pause(2000);
       }        
     break;
@@ -312,10 +312,40 @@ void TestFSM() {
       
     break;
     
+    case 4:
+      // Servo Testing
+      printf("Servo Test:\n");
+      
+      printf("\tTesting Eyebrows: -90 Degress, wait 1 second.\n");
+      setEyebrowAngle(-900, -900);
+      pause(1000);
+      printf("\tTesting Eyebrows: +90 Degress, wait 1 second.\n");
+      setEyebrowAngle(900, 900);
+      pause(1000);
+      
+      printf("\tTesting Drive Servos: Full Speed Forwards for 1 second.");
+      setServo(100, 100);
+      pause(1000);
+      printf("\tTesting Drive Servos: Full Speed Backwards for 1 second.");
+      setServo(-100, -100);
+      pause(1000);
+      
+      setServo(0, 0);
+      
+    break;
+    
+    case 5:
+      // Buzzer Testing
+      printf("\tBuzzer Testing with Increasing Frequencies (100 to 4000) for 300ms.\n");
+      for (int freq = 100; freq <= 4000; freq += 100)
+        freqout(PIN_BUZZER, 300, freq);
+        
+     break;
+        
   }    
     
   // Increase currentState
-  currentState = (currentState+1) % 4; // currentState+1, mod (max state number + 1)
+  currentState = (currentState+1) % 6; // currentState+1, mod (max state number + 1)
 }  
 
 void IRSensorCog()
@@ -411,8 +441,8 @@ float getTimeSinceMic() {
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
 {
-  servo_speed(SERVO_DRIVE_L, -leftSpeed);
-  servo_speed(SERVO_DRIVE_R, rightSpeed);
+  servo_speed(SERVO_DRIVE_L, leftSpeed);
+  servo_speed(SERVO_DRIVE_R, -rightSpeed);
 }
 
 void setEyebrowAngle(int leftEye, int rightEye)
