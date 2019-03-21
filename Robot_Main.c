@@ -3,6 +3,8 @@
 #include "stdio.h"
 #include "sirc.h"
 #include "fdserial.h" // for serial communication with Arduino/gyro
+#include "adcDCpropab.h" // for AD analog/digital reading
+#include "mstimer.h" // for timing, mostly for mic
 
 #include <Robot_Main.h>
 
@@ -18,25 +20,38 @@ volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 // Input Globals
 volatile float gyroX, gyroY, gyroZ, gyroT; // x, y, y, and total tilt as sum (updated 4 times per second), all in signed degrees
 volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 20 seconds/80 values, newest at History[0]
+volatile float micLastTrig = 0; // time in seconds microphone was last triggered
 
 // Device Globals
 fdserial *gyroSerial;
 
 // Overall Settings
 const float tiltThreshold = 15;
+const float micPeriod = 0.33; // period in s; 3Hz sampling (measure pk-pk this often)
+const int micThresholdPk = 2; // pk-pk threshold (volts)
 
 int main()
 {
   print("Main Started.\n");
   
+  // Start timer
+  mstime_start();
+  
   // Open Gyro Serial Connection
   gyroSerial = fdserial_open(PIN_GYRO_RX, PIN_GYRO_TX, 0, 115200);
+  
+  // Open A/D Connection
+  adc_init(21, 20, 19, 18);
+  
+  // Reset all Outputs to Default Setting
+  resetOutputs();
   
   // Start Cogs
   int* IRCogInfo = cog_run(&IRSensorCog, 128);
   int* EyeCogInfo = cog_run(&pwmEyeCog, 128);
   int* GyroCogInfo = cog_run(&gyroLoggingCog, 128);
-  
+  int* MicCogInfo = cog_run(&micCog, 128);
+   
   // Trigger Emotional FSM's
   while(1)
   {
@@ -61,6 +76,10 @@ int main()
      
      case LOVE: //Emotion 4
       LoveFSM();
+     break;
+     
+     case TEST_MODE: //Test Mode
+      TestFSM();
      break;
      
      default:
@@ -88,6 +107,19 @@ void DefaultFSM() {
   printf("\n");
   */
   
+  // Print out Microphone ADC (development/debugging)
+  /*
+  for (int i = 0; i < 50; i++)
+    printf("%f\t", adc_volts(PIN_MIC_AD));
+    
+  printf("\n");
+  */
+
+  // Microphone Testing
+  /*
+  printf("\tTime of Last Mic: %f\n", micLastTrig);
+  printf("\tTime Since Last Mic: %f\n", getTimeSinceMic());
+  */
 }  
 
 void AngerFSM()
@@ -297,6 +329,119 @@ void LoveFSM() {
   pause(1000);
 }  
 
+void TestFSM() {
+  // Test Mode for Testing IO Devices
+  
+  printf("Test Mode Started.\n");
+  
+  switch (currentState) {
+  
+    // Gyro Testing
+    case 0:
+    printf("Gyroscope Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tTry tilting robot. Current Gyroscope Result: ");
+        if (getTiltStatus())
+          printf("Tilted.\n");
+        else
+          printf("Not Tilted.\n");
+          
+        pause(1000);
+      }
+    break;
+    
+    case 1:  
+      // Microphone Testing
+      printf("Microphone Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tMake loud noise. Time since last microphone trigger: %fs.\n", getTimeSinceMic());
+        pause(2000);
+      }
+    break;
+    
+    case 2:
+      // Prox Sensor Testing
+      printf("Proximity Sensor Test:\n");
+      for (int i = 0; i < 5; i++) {
+        printf("\tGet near proximity sensor.  Distance to object: %fcm.\n", getProxDistance());
+        pause(2000);
+      }        
+    break;
+    
+    case 3:
+      // RGB LED Output Testing
+      printf("RGB LED Test:\n");
+      
+      printf("\tStarting RED Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(i, 0, 0);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(i, 0, 0);
+        pause(10);
+      }
+              
+      printf("\tStarting GREEN Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(0, i, 0);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(0, i, 0);
+        pause(10);
+      }
+              
+      printf("\tStarting BLUE Test from 0 to Full to 0.\n");
+      for (int i = 0; i <= 255; i++) {
+        setEyeColors(0, 0, i);
+        pause(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        setEyeColors(0, 0, i);
+        pause(10);
+      }
+              
+      setEyeColors(0,0,0);
+      
+    break;
+    
+    case 4:
+      // Servo Testing
+      printf("Servo Test:\n");
+      
+      printf("\tTesting Eyebrows: -90 Degress, wait 1 second.\n");
+      setEyebrowAngle(-900, -900);
+      pause(1000);
+      printf("\tTesting Eyebrows: +90 Degress, wait 1 second.\n");
+      setEyebrowAngle(900, 900);
+      pause(1000);
+      
+      printf("\tTesting Drive Servos: Full Speed Forwards for 1 second.");
+      setServo(100, 100);
+      pause(1000);
+      printf("\tTesting Drive Servos: Full Speed Backwards for 1 second.");
+      setServo(-100, -100);
+      pause(1000);
+      
+      setServo(0, 0);
+      
+    break;
+    
+    case 5:
+      // Buzzer Testing
+      printf("\tBuzzer Testing with Increasing Frequencies (100 to 4000) for 300ms.\n");
+      for (int freq = 100; freq <= 4000; freq += 100)
+        freqout(PIN_BUZZER, 300, freq);
+        
+     break;
+        
+  }    
+    
+  // Increase currentState
+  currentState = (currentState+1) % 6; // currentState+1, mod (max state number + 1)
+}  
+
 void IRSensorCog()
 {
   int remoteCode;
@@ -317,7 +462,7 @@ void IRSensorCog()
     {
       lastIRCode = remoteCode;
       //print("New IR Code sensed: %d.\n", lastIRCode);
-      
+      resetOutputs();
       switch(lastIRCode)
       {    
        case 16: //Emotion 1
@@ -344,6 +489,12 @@ void IRSensorCog()
        
        break;
        
+       case 20: // Test Mode (Mute)
+        emotionalState = TEST_MODE;
+        currentState = 0;
+        
+       break;
+       
        default:
         emotionalState = 0;
        break;
@@ -351,6 +502,13 @@ void IRSensorCog()
     
     }
   }    
+}  
+
+void resetOutputs()
+{
+  setServo(0,0);
+  setEyebrowAngle(0,0);
+  setEyeColors(0,0,0);
 }  
 
 // Input Functions
@@ -367,7 +525,12 @@ int getTiltStatus()
 {
   // 1 if tilted, 0 if not
   return gyroT > tiltThreshold; 
-}  
+}
+
+float getTimeSinceMic() {
+  // Returns the number of seconds since the microphone was last triggered
+  return mstime_get()/1000.0 - micLastTrig; // current time - mic last trig time
+}
 
 int getMicStatus()
 {
@@ -377,8 +540,8 @@ int getMicStatus()
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
 {
-  servo_speed(SERVO_DRIVE_L, -leftSpeed);
-  servo_speed(SERVO_DRIVE_R, rightSpeed);
+  servo_speed(SERVO_DRIVE_L, leftSpeed);
+  servo_speed(SERVO_DRIVE_R, -rightSpeed);
 }
 
 void setVibration()
@@ -431,7 +594,7 @@ void gyroLoggingCog() {
    while (1) {
      // Read the Values
      dscan(gyroSerial, "%f,%f,%f,%f", &gyroX, &gyroY, &gyroZ, &gyroT);
-     
+     //printf("\tRead Gyro: %f,%f,%f,%f", gyroX, gyroY, gyroZ, gyroT); // Run from cog, will fail
 
      // Shift Values in Array Right
      for (int i = GYRO_HISTORY_COUNT-1; i > 0; i--) {
@@ -449,3 +612,41 @@ void gyroLoggingCog() {
    }     
    
 }  
+
+void micCog() {
+  float max, min, maxPkPk, read;
+  float startTime;
+  
+  while (1) {
+    
+    // Set Extreme Initial Values
+    max = -1000;
+    min = 1000;
+    maxPkPk = 0;
+    
+    read = adc_volts(PIN_MIC_AD);
+   
+    startTime = mstime_get() / 1000.0;
+    
+    // Record the highest and lowest mic values for a while (micPeriod)
+    while (mstime_get()/1000.0 - startTime < micPeriod)
+    {
+      read = adc_volts(PIN_MIC_AD);
+      
+      if (read > max)
+        max = read;
+      else if (read < min)
+        min = read;
+        
+    }
+    
+    // After reading a full period of values, determine pk-pk value
+    maxPkPk = max - min;
+    
+    if (maxPkPk > micThresholdPk) {
+      //printf("NEW MICROPHONE TRIGGER, pk-pk=%f\n", maxPkPk); // should fail because inside cog
+      micLastTrig = mstime_get()/1000.0; // set time to the current trigger time
+      
+    }    
+  }
+}
