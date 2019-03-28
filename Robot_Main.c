@@ -155,13 +155,41 @@ void AngerFSM()
       // Triggered by Proximity Sensor
       
       // State Actions
-      setEyeColors(250, 0 ,0);
-      setServo(100, 100);
+
+      if(getProxDistance() < 5 || getProxDistance() > 330)
+      {
+        for(int i = 0; i < 10; i++)
+        {
+          setEyeColors(250, 0, 0);
+          if(i < 5)
+          {
+            setServo(-100, -100);
+          }
+          else
+          {
+            setServo(100, 100);
+          }
+          freqout(PIN_BUZZER, 100, 300);
+          setEyeColors(0, 0, 0);
+          pause(100);
+          if(getProxDistance() >= 5)
+          {
+            break;
+          }
+          
+        }
+      }
+      else
+      {
+        setEyeColors(250, 0 ,0);
+        setServo(100, 100);
       
-      freqout(PIN_BUZZER, 300, 300);
+        freqout(PIN_BUZZER, 300, 300);
        
-      setEyeColors(0, 0, 0);
-      pause(250);
+        setEyeColors(0, 0, 0);
+        pause(250);
+      
+      }        
       
       // Next State Logic
       if(getProxDistance() > 30 || getProxDistance() == -1)
@@ -212,13 +240,13 @@ void AngerFSM()
 
 void FearFSM() {
   print("Fear Emotion Started.\n");
-  
+  /*
   switch(currentState) {
     case 0:
       // Default State within Fear
       
       // State Actions
-      setServo(0,0)
+      setServo(0,0);
       setEyebrowAngle(-450, -450);
       setEyeColors(10, 10, 10);
       setVibration();
@@ -308,7 +336,7 @@ void FearFSM() {
   
 
 
-}  
+}  */
 }  
 
 
