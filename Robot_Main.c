@@ -156,13 +156,41 @@ void AngerFSM()
       // Triggered by Proximity Sensor
       
       // State Actions
-      setEyeColors(250, 0 ,0);
-      setServo(100, 100);
+
+      if(getProxDistance() < 5 || getProxDistance() > 330)
+      {
+        for(int i = 0; i < 10; i++)
+        {
+          setEyeColors(250, 0, 0);
+          if(i < 5)
+          {
+            setServo(-100, -100);
+          }
+          else
+          {
+            setServo(100, 100);
+          }
+          freqout(PIN_BUZZER, 100, 300);
+          setEyeColors(0, 0, 0);
+          pause(100);
+          if(getProxDistance() >= 5)
+          {
+            break;
+          }
+          
+        }
+      }
+      else
+      {
+        setEyeColors(250, 0 ,0);
+        setServo(100, 100);
       
-      freqout(PIN_BUZZER, 300, 300);
+        freqout(PIN_BUZZER, 300, 300);
        
-      setEyeColors(0, 0, 0);
-      pause(250);
+        setEyeColors(0, 0, 0);
+        pause(250);
+      
+      }        
       
       // Next State Logic
       if(getProxDistance() > 30 || getProxDistance() == -1)
@@ -213,9 +241,103 @@ void AngerFSM()
 
 void FearFSM() {
   print("Fear Emotion Started.\n");
-  setEyeColors(0, 100, 0);
+  /*
+  switch(currentState) {
+    case 0:
+      // Default State within Fear
+      
+      // State Actions
+      setServo(0,0);
+      setEyebrowAngle(-450, -450);
+      setEyeColors(10, 10, 10);
+      setVibration();
+      
+      // Next State Logic
+      if(getProxDistance() <= 30 && getProxDistance() != -1)
+      {
+       currentState = 2; 
+       printf("\tProximity Triggered (in Fear).\n");
+      }
+      if(getMicStatus() <= 10 ) // needs to be adjusted based on input values
+      {
+       currentState = 1; 
+       printf("\t Mic Triggered (in Fear).\n");
+
+      }
+              
+    break;
+    
+    case 1:
+      // First Elevated State within Fear
+      // Triggered by Microphone
+      
+      // State Actions
+      
+      setEyeColors(10, 10 ,10);
+      
+      //turning side to side
+      for(int i=0; i<=180 ;i++){
+        
+        
+        //Servo turning back and forth
+        if(i
+        setServo(
+        
+        pause(50)
+        
+        
+        //Intermittent buzzer
+         int random_f = 1+ (double)rand() / (double)RAND_MAX ;
+         int random_t = 1+ (double)rand() / (double)RAND_MAX ;
+         freqout(PIN_BUZZER, 300, (600*int random_f));
+         pause(500*random_t);
+         
+         
+        
+      
+      
+     
+       
+      
+      // Next State Logic
+      
+
+      }
+      
+    break;
+    
+    case 2:
+      // Second Elevated State within Fear
+      // Proximity sensor
+      
+      // State Actions
+      setEyeColors(10,10,10);
+      setServo(-75,-75);
+      for(int buzzerFreq = 300; buzzerFreq <= 600; buzzerFreq += 20)
+      {
+        if (emotionalState != ANGER) return;
+        setEyeColors(250, 0, 0);
+        freqout(PIN_BUZZER, 250, buzzerFreq);
+        setEyeColors(0, 0, 0);
+        pause(250);
+        
+        // Next State (Break Out) Logic
+        if(!getTiltStatus())
+        {
+          currentState = 0;
+          break; // break out of for loop
+        }          
+         
+       
+      }
+    
+    break;
+  }    
+
   
-  pause(500);
+
+
+}  */
 }  
 
 
@@ -556,6 +678,11 @@ float getTimeSinceMic() {
   return mstime_get()/1000.0 - micLastTrig; // current time - mic last trig time
 }
 
+int getMicStatus()
+{
+  //Mic code here
+  }
+
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
 {
@@ -563,6 +690,14 @@ void setServo(int leftSpeed, int rightSpeed)
   servo_speed(SERVO_DRIVE_R, -rightSpeed);
 }
 
+void setVibration()
+{
+  setServo(100, -100);
+  pause (100);
+  setServo(-100,100);
+  pause (100);
+ 
+  }
 void setEyebrowAngle(int leftEye, int rightEye)
 { 
   // Arguments take angle from -900 to 900

@@ -36,7 +36,6 @@
 /* Other Macros ------------------------------------*/
 #define GYRO_HISTORY_COUNT 80
 
-
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
 void pwmEyeCog();
