@@ -34,7 +34,7 @@
 
 
 /* Other Macros ------------------------------------*/
-#define GYRO_HISTORY_COUNT 80
+#define GYRO_HISTORY_COUNT 20 // stores 20 values / 4 values per sec = 5 seconds
 
 /* Robot_Main.c ------------------------------------*/
 void IRSensorCog();
