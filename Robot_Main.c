@@ -13,6 +13,7 @@
 volatile int lastIRCode = 0;
 volatile int emotionalState = 0;
 volatile int currentState = 0; // current state within each emotional state machine
+volatile int timesad;
 
 // Output Globals
 volatile int eyeR = 0, eyeG = 0, eyeB = 0;
@@ -157,13 +158,41 @@ void AngerFSM()
       // Triggered by Proximity Sensor
       
       // State Actions
-      setEyeColors(250, 0 ,0);
-      setServo(100, 100);
+
+      if(getProxDistance() < 5 || getProxDistance() > 330)
+      {
+        for(int i = 0; i < 10; i++)
+        {
+          setEyeColors(250, 0, 0);
+          if(i < 5)
+          {
+            setServo(-100, -100);
+          }
+          else
+          {
+            setServo(100, 100);
+          }
+          freqout(PIN_BUZZER, 100, 300);
+          setEyeColors(0, 0, 0);
+          pause(100);
+          if(getProxDistance() >= 5)
+          {
+            break;
+          }
+          
+        }
+      }
+      else
+      {
+        setEyeColors(250, 0 ,0);
+        setServo(100, 100);
       
-      freqout(PIN_BUZZER, 300, 300);
+        freqout(PIN_BUZZER, 300, 300);
        
-      setEyeColors(0, 0, 0);
-      pause(250);
+        setEyeColors(0, 0, 0);
+        pause(250);
+      
+      }        
       
       // Next State Logic
       if(getProxDistance() > 30 || getProxDistance() == -1)
@@ -214,7 +243,6 @@ void AngerFSM()
 
 void FearFSM() {
   print("Fear Emotion Started.\n");
-  
   /*
   switch(currentState) {
     case 0:
@@ -312,15 +340,130 @@ void FearFSM() {
 
 */
 
-}  
-
 
 
 void SadnessFSM() {
-  print("Sadness Emotion Started.\n");
-  setEyeColors(0, 0, 100);
+  print("Sadness Emotion Started (State=%d)\n", currentState);
+  int dspeed;
+  int count;
+  int lspeed;
+  int rspeed;
+  int x;
+  //int timesad;
   
-  pause(500);
+  switch(currentState) {
+    case 0:
+      // Default State within Sadness
+      
+      // State Actions
+      
+      dspeed = 20;
+      count = 0;
+      
+      while(1)
+      {
+        if (emotionalState != SADNESS) return;
+        
+        if (count % 15 == 0) 
+          dspeed = -dspeed;
+          
+        setServo(dspeed, dspeed);
+        pause(100);
+        setEyebrowAngle(-450, -450);
+        setEyeColors(0, 0, 100);
+      
+        // Next State Logic
+        if(getTimeSinceMic() <= 2)
+        {
+          currentState = 1; 
+          printf("\tMicrophone Triggered (in Sadness).\n");
+          break;
+        }
+        count++;
+      }      
+              
+    break;
+    
+    case 1:
+      // First Elevated State within Sadness
+      // Triggered by Microphone Sensor
+      
+      // State Actions
+      
+      lspeed = 20;
+      rspeed = 30;
+      x = 10;
+      timesad = 0;
+      
+      while (1)
+      {
+        if (emotionalState != SADNESS) return;
+        
+        setServo(lspeed, rspeed);
+        setEyeColors(0, 0 ,100);
+        pause(500);
+        setEyeColors(0, 30, 100);
+        pause(500);
+        
+        lspeed += x;
+        x = -x;
+        rspeed +=x;
+        timesad += 1000;
+        
+        // Next State Logic
+        if(getProxDistance() <= 20 && getProxDistance() != -1)
+        {
+          currentState = 2;
+          printf("\tUltrasonic Triggered (in Sadness).\n");
+          break;
+        }
+      }        
+      
+    break;
+    
+    case 2:
+      // Second Elevated State within Sadness
+      // Triggered by Ultrasonic Sensor
+      
+      // State Actions
+      
+      setServo(0, 0);
+      
+      for(int i = 0; i <= 8; i++)
+      {
+        if (emotionalState != SADNESS) return;
+        
+        setEyebrowAngle(-400, -400);
+        setEyeColors(0, 0, 100);
+        pause(200);
+        setEyeColors(0, 15, 100);
+        freqout(PIN_BUZZER, 250, 2000);
+        setEyebrowAngle(-500, -500);
+        setEyeColors(0, 30, 100);
+        pause(200);
+        setEyeColors(0, 15, 100);
+        freqout(PIN_BUZZER, 250, 2000);
+        setEyebrowAngle(-400, -400);
+        setEyeColors(0, 0, 100);
+        pause(100);
+        setEyeColors(0, 15, 100);
+        pause(100);
+        setEyeColors(0, 30, 100);
+        pause(100);
+        setEyeColors(0, 15, 100);
+        freqout(PIN_BUZZER, 400, 1000);             
+      }
+      
+      
+      setServo(30, -30);
+      pause(2500);
+      setServo(25, 25);
+      pause(timesad);
+      setServo(-30, 30);
+      pause(2500);
+      currentState = 0;
+      break;
+  }  
 }  
 
 
