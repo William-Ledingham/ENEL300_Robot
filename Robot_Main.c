@@ -19,8 +19,9 @@ volatile int eyeR = 0, eyeG = 0, eyeB = 0;
 
 // Input Globals
 volatile float gyroX, gyroY, gyroZ, gyroT; // x, y, y, and total tilt as sum (updated 4 times per second), all in signed degrees
-volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 20 seconds/80 values, newest at History[0]
+volatile float gyroXHistory[GYRO_HISTORY_COUNT], gyroYHistory[GYRO_HISTORY_COUNT], gyroTHistory[GYRO_HISTORY_COUNT]; // each stores 4 val/sec, newest at History[0]
 volatile float micLastTrig = 0; // time in seconds microphone was last triggered
+volatile int gyroRockCount = 0; // number of alternating rockings in the last GYRO_HISTORY_COUNT period (at 4 values/sec)
 
 // Device Globals
 fdserial *gyroSerial;
@@ -29,6 +30,7 @@ fdserial *gyroSerial;
 const float tiltThreshold = 15;
 const float micPeriod = 0.33; // period in s; 3Hz sampling (measure pk-pk this often)
 const int micThresholdPk = 2; // pk-pk threshold (volts)
+const int gyroRockThreshold = 2; // number of rocks required to trigger
 
 int main()
 {
@@ -213,12 +215,13 @@ void AngerFSM()
 void FearFSM() {
   print("Fear Emotion Started.\n");
   
+  /*
   switch(currentState) {
     case 0:
       // Default State within Fear
       
       // State Actions
-      setServo(0,0)
+      setServo(0,0);
       setEyebrowAngle(-450, -450);
       setEyeColors(10, 10, 10);
       setVibration();
@@ -307,9 +310,10 @@ void FearFSM() {
 
   
 
+*/
 
 }  
-}  
+
 
 
 void SadnessFSM() {
@@ -321,12 +325,247 @@ void SadnessFSM() {
 
 
 void LoveFSM() {
-  print("Love/Affection Emotion Started.\n");
+  print("Love Emotion Started (State=%d)\n", currentState);
   
-  setEyeColors(190, 51, 255);
-  pause(1000);
-  setEyeColors(255, 51, 212);
-  pause(1000);
+  // Set the pulse eye colors
+  int r1 = 128, g1 = 0, b1 = 128;
+  int r2 = 255, g2 = 160, b2 = 202;
+  float colorChangePeriod; // ms (transition time, full period)
+  int defaultEyebrowAngle = -200;
+  
+  switch (currentState) {
+    case 0:
+      // Default State
+      setEyebrowAngle(defaultEyebrowAngle, defaultEyebrowAngle);
+      
+      // Fade Between Colors
+      colorChangePeriod = 5000;
+      for (float i = 0; i < 1.0; i += 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        
+        //pause(colorChangePeriod / 200);
+        if ((int)(i*300) % 2 == 0)
+          freqout(PIN_BUZZER, colorChangePeriod/200, 300);
+        else
+          pause(colorChangePeriod/200);
+        
+        // Check Next State
+        if (getTiltStatus()) {
+          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          currentState = 2;
+          break;
+        }   
+        else if (getProxDistance() < 30) {
+          printf("\tProx Sensor Triggered (Into State 1)\n");
+          currentState = 1;
+          break;
+        }
+        if (emotionalState != LOVE) return;
+        
+      }        
+      for (float i = 1.0; i > 0; i -= 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        pause(colorChangePeriod / 200);
+        
+        
+        // Check Next State
+        if (getTiltStatus()) {
+          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          currentState = 2;
+          break;
+        }   
+        else if (getProxDistance() < 30) {
+          printf("\tProx Sensor Triggered (Into State 1)\n");
+          currentState = 1;
+          break;
+        }
+        if (emotionalState != LOVE) return;
+        
+      }    
+      
+      // Make Robot Wink
+      for (int i = 0; i < 3; i++) {
+        // Wink
+        setEyebrowAngle(-600, -600);
+        pause(200);
+        setEyebrowAngle(0, 0);
+        pause(600);
+        
+        
+        // Check Next State
+        if (getTiltStatus()) {
+          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          currentState = 2;
+          break;
+        }  
+        else if (getProxDistance() < 30) {
+          printf("\tProx Sensor Triggered (Into State 1)\n");
+          currentState = 1;
+          break;
+        } 
+        if (emotionalState != LOVE) return;
+      
+      }        
+      setEyebrowAngle(defaultEyebrowAngle, defaultEyebrowAngle);
+           
+      
+    break;
+    
+    case 1:
+      // Run toward object and nudge it
+      
+      // Run forward up to 4s, or until it hits hand
+      printf("\tForward up to 4s or until prox<5. Prox: ");
+      for (int i = 0; i < 10 && getProxDistance() > 10 && getProxDistance() < 30; i++) {
+        printf("%f,", getProxDistance());
+        setServo(60, 60);
+        pause(400);
+        
+        if (getTiltStatus()) {
+          currentState = 2;
+          return;
+        }   
+      }
+      printf("\n");
+      
+      // Make it go forward just a little more to nudge
+      setServo(30, 30);
+      pause(800);
+      
+      // Make it go side to side (cuddle nudge)
+      for (int i = 0; i < 4; i++) {
+        setServo(40, -40);
+        //pause(200);
+        freqout(PIN_BUZZER, 200, 10000);
+        setServo(-40, 40);
+        pause(200);
+        if (getTiltStatus()) {
+          currentState = 2;
+          return;
+        }          
+      }        
+      
+      // Back up for 1s
+      if (getProxDistance() < 30) {
+        printf("\tBackwards 1s.\n");
+        setServo(-40, -40);
+        pause(1000);
+      }        
+      setServo(0, 0);
+      
+    
+      // Prox Sensor Triggered, Run at Object and Nudge
+      if (getProxDistance() > 30 && getProxDistance() < 338) {
+        // No object, go back to default state
+        if (getTiltStatus()) {
+          currentState = 2;
+        }
+        else {         
+          currentState = 0;
+        }          
+      }
+      
+      
+    break;
+    
+    case 2:
+      // Robot is picked up/tilted
+      
+      setServo(0, 0);
+      
+      // Fade Between Colors
+      colorChangePeriod = 1000;
+      for (float i = 0; i < 1.0; i += 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        
+        
+        //pause(colorChangePeriod / 200);
+        
+        if ((int)(i*1000) % 2 == 0)
+          freqout(PIN_BUZZER, colorChangePeriod/200, 1000);
+        else
+          pause(colorChangePeriod/200);
+        
+        // Next State Logic      
+        if (!getTiltStatus()) {
+          // Return to default state if set down
+          currentState = 0;
+          break;
+        }
+        if (emotionalState != LOVE) return;
+      }        
+      for (float i = 1.0; i > 0; i -= 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        pause(colorChangePeriod / 200);
+        
+        // Next State Logic      
+        if (!getTiltStatus()) {
+          // Return to default state if set down
+          currentState = 0;
+          break;
+        }
+        if (emotionalState != LOVE) return;
+      }
+      
+      // Next State Logic      
+      if (!getTiltStatus()) {
+        // Return to default state if set down
+        currentState = 0;
+      }
+      
+      // Check if the history contains some negative and positive tilt values (indicating rocking)
+      if (gyroRockCount > gyroRockThreshold) {
+        printf("\tGyro rocked greater than %d times.\n", gyroRockThreshold);
+        currentState = 3;
+      }
+      
+                      
+    break;
+    
+    case 3:
+      // Robot being rocked
+      setServo(0, 0);
+      setEyebrowAngle(-200, -200);
+      
+      // Fade Between Colors
+      colorChangePeriod = 500;
+      for (float i = 0; i < 1.0; i += 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        
+        //pause(colorChangePeriod / 200);
+        freqout(PIN_BUZZER, colorChangePeriod/200, i*1000 + 200);
+        
+        if (i > 0.2 && i < 0.4) setEyebrowAngle(0, 0);
+        else setEyebrowAngle(-200, -200);
+        
+        if (emotionalState != LOVE) return;
+      }        
+      for (float i = 1.0; i > 0; i -= 0.01) {
+        setEyeColors(r1 + (r2-r1)*i, g1 + (g2-g1)*i, b1 + (b2-b1)*i);
+        
+        //pause(colorChangePeriod / 200);
+        freqout(PIN_BUZZER, colorChangePeriod/200, i*1000 + 200);
+        
+        
+        if (i > 0.2 && i < 0.3) setEyebrowAngle(-600, -600);
+        else setEyebrowAngle(-200, -200);
+        
+        if (emotionalState != LOVE) return;
+      }
+      
+      // Next State
+      if (gyroRockCount == 0 && !getTiltStatus()) {
+        printf("\tRobot set down.\n");
+        currentState = 0;
+      }       
+      
+      pause(400); 
+      
+    break;
+        
+  }
+  
+  
 }  
 
 void TestFSM() {
@@ -606,7 +845,34 @@ void gyroLoggingCog() {
      // Add current value at [0]
      gyroXHistory[0] = gyroX;
      gyroYHistory[0] = gyroY;
-     gyroTHistory[0] = gyroT;       
+     gyroTHistory[0] = gyroT;      
+     
+     // Determine if it's being rocked
+     gyroRockCount = 0;
+      for (int i = 0; i < GYRO_HISTORY_COUNT-1; i++) {
+        // Test for X-Axis
+        if (gyroXHistory[i] > tiltThreshold && gyroXHistory[i+1] < -tiltThreshold)
+          // current is +tilt and last was -tilt
+          gyroRockCount ++;
+        if (gyroXHistory[i] < -tiltThreshold && gyroXHistory[i+1] > tiltThreshold)
+          // current is -tilt and last was +tilt
+          gyroRockCount ++;
+          
+        // Test for Y-Axis
+        if (gyroYHistory[i] > tiltThreshold && gyroYHistory[i+1] < -tiltThreshold)
+          // current is +tilt and last was -tilt
+          gyroRockCount ++;
+        if (gyroYHistory[i] < -tiltThreshold && gyroYHistory[i+1] > tiltThreshold)
+          // current is -tilt and last was +tilt
+          gyroRockCount ++;
+      }
+      
+      // Debug Printing for Gyro Rocking Sensing
+      /*
+      printf("\tGyroXHistory: ");
+      for (int i = 0; i < GYRO_HISTORY_COUNT; i++) printf("%f,", gyroXHistory[i]);
+      printf("\n\tGyro Count: %d\n", gyroRockCount);     
+      */
         
    
    }     
