@@ -1,5 +1,4 @@
 Robot_Main.c
-Emotion_Anger.c
 Robot_Main.h
 >compiler=C
 >memtype=cmm main ram compact

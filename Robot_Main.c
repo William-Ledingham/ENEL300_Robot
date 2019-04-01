@@ -243,8 +243,245 @@ void AngerFSM()
 
 void FearFSM() {
   print("Fear Emotion Started.\n");
-  /* Old Non-Compiling Code */
+  double random_f;
+  double random_t;
+  //State Resets
+  int turn=0;
+  setServo(0,0);
+  
+  switch(currentState) {
+    case 0:
+      // Default State within Fear
+  if (emotionalState != FEAR) return;
+ 
+      for (int i=0; i<=360; i++){
+        // State Actions
+        if (emotionalState != FEAR) return;
+        setEyebrowAngle(-450, -450);
+        setEyeColors(30, 30, 30);
+        // Vibration
+        if(i%2 == 1){
+          setServo(15,-15);
+        }
+        else{
+          setServo(-15,15);
+        }                    
+        pause(100);
+      
+        // Next State Logic for default
+        if(i>30){
+        if(getProxDistance() <= 20 && getProxDistance() != -1)
+        {
+         currentState = 2; 
+         printf("\tProximity Triggered (in Fear 0).\n");
+         break;
+        } 
+        else if(getTimeSinceMic() <= 2.0 ) 
+        {
+         currentState = 1; 
+         printf("\tMic Triggered (in Fear 0).\n");
+         break;
+        }
+        
+        }      
+    }      
+      
 
+      
+              
+    break;
+    /*
+    case 1:
+    printf("\tState1 Triggered (in Fear).\n");
+      // First Elevated State within Fear
+      if (emotionalState != FEAR) return;
+      int b=0;
+      printf("Fear1 state loops started. \n");
+      for(int j = 2; j>=-2 ; j--){
+        if(b){
+          break;
+        }          
+      for (int i=0; i<280  ; i++){
+        if (emotionalState != FEAR) return;
+        
+        // State Actions
+        setEyeColors(20, 20 ,20);
+        setEyebrowAngle(-450, -450);
+        pause(21);
+        //Servo turning back and forth
+        if(i>=0 && i<50){
+          turn=0;
+          if(i%6 < 3){
+          setServo(15,-15);
+          }
+          else{
+          setServo(-15,15);
+          }  
+          
+        }
+        if(i>=50 && i<70){
+          turn=1;
+          setServo(90,-90);
+        }
+        if(i>=70 && i<120){
+          turn=0;
+          if(i%6 < 3){
+          setServo(15,-15);
+          }
+          else{
+          setServo(-15,15);
+          } 
+        }
+        if(i>=120 && i<140){
+          turn=1;
+          setServo(-90,90);
+        }
+        if(i>=140 && i<190){
+          turn=0;
+          if(i%6 < 3){
+          setServo(15,-15);
+          }
+          else{
+          setServo(-15,15);
+          } 
+        }
+        if(i>=190 && i<210){
+          turn=1;
+          setServo(-90,90);
+        }
+        if(i>=210 && i<260){
+          turn=0;
+          if(i%6 < 3){
+          setServo(15,-15);
+          }
+          else{
+          setServo(-15,15);
+          } 
+        }
+        if(i>=260 && i<280){
+          turn=1;
+          setServo(90,-90);
+        }                                                                                
+                                      
+        
+        // Next State Logic in state 1
+        if(i>150 || j<2){
+        if(getProxDistance() <= 30 && getProxDistance() != -1 && turn != 1)
+        {
+         currentState = 2; 
+         printf("\tProximity Triggered (in Fear 1).\n");
+         b=1;
+         break;
+        }
+        else if(getTimeSinceMic() <= 2.0) 
+        {
+         currentState = 3; 
+         printf("\t Mic Triggered (in Fear 1).\n");
+         b=1;
+         break;
+        }  
+        else if(j<=0)
+        {
+          currentState=0;
+          printf("\t Timer Triggered (in Fear 1).\n");
+          b=1;
+          break;
+        }    
+       }
+        //end of next state logic        
+      }
+      }
+
+    break;
+    
+    case 2:
+      // Second Elevated State within Fear
+      printf("\tState2 Triggered (in Fear).\n");
+      // State Actions
+      if (emotionalState != FEAR) return;
+      
+      for (int i=0; i<=20 ; i++){
+        if (emotionalState != FEAR) return;
+        setEyeColors(10,10,10);
+        setServo(-50,-50);
+        
+        
+      //Intermittent buzzer
+          random_f = (1+ (double)rand() / (double)RAND_MAX) ;
+         random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+         freqout(PIN_BUZZER,(200*random_t) , (700*random_f));
+         pause(800-(200*random_t));
+    
+      // Next State Logic in fear state 2
+      if(i>2){
+          if(getProxDistance() <= 30 && getProxDistance() != -1)
+        {
+         i=0;
+         printf("\tProximity Triggered (in Fear 2).\n");
+         break;
+        }
+        if(getTimeSinceMic() <= 2.0)
+        {
+         currentState = 3; 
+         printf("\t Mic Triggered (in Fear 2).\n");
+         break;
+        }  
+        else if(i>=12)
+        {
+          currentState=1;
+          printf("\t Timer Triggered (in Fear 2).\n");
+          break;
+        }    
+       } 
+       //end of next state logic        
+      }
+     
+    break;
+    
+    case 3:
+      //Third Elevated State within Fear
+      printf("\tState3 Triggered (in Fear).\n");
+      //State actions
+      if (emotionalState != FEAR) return;
+      for(int i=0 ; i<30 ;i++){
+        if (emotionalState != FEAR) return;
+        setEyeColors(0,0,0);
+        
+        //turning and running
+        if(i<2){
+          setServo(130,-130);
+        }
+        else{
+          setServo(150,150); 
+        }
+        //beeping
+        random_f = (1+ (double)rand() / (double)RAND_MAX) ;
+         random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+         freqout(PIN_BUZZER,(200*random_t) , (700*random_f));
+         pause(400-(200*random_t));                   
+     
+     
+      
+      //Next State Logic in fear state 3
+      if(i>4){
+        if(getTimeSinceMic() <= 2)
+        {
+         i=0; 
+         printf("\t Mic Triggered (in Fear 3).\n");
+         break;
+        }  
+        else if(i>=24)
+        {
+          currentState=1;
+          printf("\t Timer Triggered (in Fear 3).\n");
+          break;
+        }    
+       }
+      //end of next state logic
+    }      
+    break; */
+    //closing of switch and fearFSM below:
+  }    
 }
 
 
