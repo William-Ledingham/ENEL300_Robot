@@ -6,6 +6,7 @@
 #include "adcDCpropab.h" // for AD analog/digital reading
 #include "mstimer.h" // for timing, mostly for mic
 
+
 #include <Robot_Main.h>
 
 /* -- Global Variables -- */
@@ -30,7 +31,7 @@ fdserial *gyroSerial;
 // Overall Settings
 const float tiltThreshold = 15;
 const float micPeriod = 0.33; // period in s; 3Hz sampling (measure pk-pk this often)
-const int micThresholdPk = 2; // pk-pk threshold (volts)
+const int micThresholdPk = 3; // pk-pk threshold (volts)
 const int gyroRockThreshold = 2; // number of rocks required to trigger
 
 int main()
@@ -106,35 +107,35 @@ void DefaultFSM() {
   // Print out Gyro History (debugging)
   /*
   for (int i = 0; i < GYRO_HISTORY_COUNT; i++)
-    printf("%f,", gyroXHistory[i]);
-  printf("\n");
+    print("%f,", gyroXHistory[i]);
+  print("\n");
   */
   
   // Print out Microphone ADC (development/debugging)
   /*
   for (int i = 0; i < 50; i++)
-    printf("%f\t", adc_volts(PIN_MIC_AD));
+    print("%f\t", adc_volts(PIN_MIC_AD));
     
-  printf("\n");
+  print("\n");
   */
 
   // Microphone Testing
   /*
-  printf("\tTime of Last Mic: %f\n", micLastTrig);
-  printf("\tTime Since Last Mic: %f\n", getTimeSinceMic());
+  print("\tTime of Last Mic: %f\n", micLastTrig);
+  print("\tTime Since Last Mic: %f\n", getTimeSinceMic());
   */
 }  
 
 void AngerFSM()
 {
-  print("Anger Emotion Started (State=%d)\n", currentState);
+  //print("Anger Emotion Started (State=%d)\n", currentState);
   
   switch(currentState) {
     case 0:
       // Default State within Anger
       
       // State Actions
-      setServo(10,-10);
+      setServo(30,-30);
       setEyebrowAngle(450, 450);
       setEyeColors(250, 0, 0);
       
@@ -142,12 +143,12 @@ void AngerFSM()
       if(getProxDistance() <= 30 && getProxDistance() != -1)
       {
        currentState = 1; 
-       printf("\tProximity Triggered (in Anger).\n");
+       //print("\tProximity Triggered (in Anger).\n");
       }
       if(getTiltStatus())
       {
        currentState = 2; 
-       printf("\tTilt Triggered (in Anger).\n");
+       //print("\tTilt Triggered (in Anger).\n");
 
       }
               
@@ -203,7 +204,7 @@ void AngerFSM()
       if(getTiltStatus())
       {
        currentState = 2; 
-       printf("\tTilt Triggered (in Anger).\n");
+       print("\tTilt Triggered (in Anger).\n");
 
       }
       
@@ -241,6 +242,133 @@ void AngerFSM()
 
 }  
 
+
+void FearFSM()
+{
+ 
+	switch(currentState)
+	{
+		case 0:
+	
+			setEyebrowAngle(-450, -450);
+			setEyeColors(30, 30, 30);
+			
+			for (int i=0; i<=360; i++)
+			{
+				
+				if(i%2 == 1)
+				{
+					setServo(15,-15);
+				}
+				else
+				{
+					setServo(-15,15);
+				}                    
+				pause(120);
+				
+				
+				if(i>30)
+				{
+					if(getProxDistance() <= 20 && getProxDistance() != -1)
+					{
+						currentState = 2; 
+						print("\tProximity Triggered (in Fear 0).\n");
+						break;
+					} 
+					else if(getTimeSinceMic() <= 2 ) 
+					{
+						currentState = 1; 
+						print("\tMic Triggered (in Fear 0).\n");
+						break;
+					}
+
+				} 
+      	if (emotionalState != FEAR) return;
+
+			}
+			
+		
+		break;
+		
+		case 1:
+		
+			print("\tState1 Triggered (in Fear).\n");
+			
+			for(int j = 1; j <= 3; j++)
+			{			
+				for(int i = 0; i < 40 ; i++)
+				{					
+					if((i >= 10 && i < 20) || (i >= 30 && i < 40))
+					{					
+						if(i%2 == 1)
+						{
+							setServo(15,-15);
+						}
+						else
+						{
+							setServo(-15,15);
+						}                    
+						pause(120);
+					}
+					else if ( i >= 0 && i < 10)
+					{
+						setServo(90,-90);
+						pause(20);
+					}	
+					else if ( i >= 20 && i < 30)
+					{
+						setServo(-90,90);
+						pause(20);
+					}
+				
+					if (emotionalState != FEAR) return;
+				
+					if(getProxDistance() <= 30 && getProxDistance() != -1 && ((i >= 10 && i < 20) || (i >= 30 && i < 40)))
+					{
+						currentState = 2; 
+						print("\tProximity Triggered (in Fear 1).\n");
+						return;
+					}
+     
+
+      
+				}
+			}
+			currentState = 0;
+		
+		break;
+		
+		
+		case 2:
+		  
+      //setEyeColors(200, 200, 200);
+      setServo(100, -100);
+      freqout(PIN_BUZZER, 800, 800);
+      pause(800);
+      for(int i = 0; i < 10; i++)
+      {
+         setServo(100, 100);
+         pause(300);
+         freqout(PIN_BUZZER, 200, 800);
+         
+         if (emotionalState != FEAR) return;
+         
+         if(getProxDistance() <= 30 && getProxDistance() != -1)
+         {
+            currentState = 2;
+            return; 
+         }           
+      }        
+      currentState = 0;
+		
+		break;
+
+	}
+  
+}  
+
+/*
+
 void FearFSM() {
   print("Fear Emotion Started.\n");
   double random_f;
@@ -273,13 +401,13 @@ void FearFSM() {
         if(getProxDistance() <= 20 && getProxDistance() != -1)
         {
          currentState = 2; 
-         printf("\tProximity Triggered (in Fear 0).\n");
+         print("\tProximity Triggered (in Fear 0).\n");
          break;
         } 
         else if(getTimeSinceMic() <= 2.0 ) 
         {
          currentState = 1; 
-         printf("\tMic Triggered (in Fear 0).\n");
+         print("\tMic Triggered (in Fear 0).\n");
          break;
         }
         
@@ -290,13 +418,16 @@ void FearFSM() {
       
               
     break;
-    /*
+    
     case 1:
-    printf("\tState1 Triggered (in Fear).\n");
+    print("\tState1 Triggered (in Fear).\n");
       // First Elevated State within Fear
       if (emotionalState != FEAR) return;
+      
+
+      
       int b=0;
-      printf("Fear1 state loops started. \n");
+      print("Fear1 state loops started. \n");
       for(int j = 2; j>=-2 ; j--){
         if(b){
           break;
@@ -307,88 +438,105 @@ void FearFSM() {
         // State Actions
         setEyeColors(20, 20 ,20);
         setEyebrowAngle(-450, -450);
-        pause(21);
+        pause(20);
         //Servo turning back and forth
-        if(i>=0 && i<50){
-          turn=0;
-          if(i%6 < 3){
-          setServo(15,-15);
+        if(i>=0 && i<50)
+        {
+          //turn=0;
+          if(i%6 < 3)
+          {
+            setServo(15,-15);
           }
-          else{
-          setServo(-15,15);
+          else
+          {
+            setServo(-15,15);
           }  
           
         }
-        if(i>=50 && i<70){
-          turn=1;
+        else if(i>=50 && i<70)
+        {
+          //turn=1;
           setServo(90,-90);
         }
-        if(i>=70 && i<120){
-          turn=0;
-          if(i%6 < 3){
-          setServo(15,-15);
+        else if(i>=70 && i<120)
+        {
+         // turn=0;
+          if(i%6 < 3)
+          {
+            setServo(15,-15);
           }
-          else{
-          setServo(-15,15);
+          else
+          {
+            setServo(-15,15);
           } 
         }
-        if(i>=120 && i<140){
-          turn=1;
+        else if(i>=120 && i<140)
+        {
+          //turn=1;
           setServo(-90,90);
         }
-        if(i>=140 && i<190){
-          turn=0;
-          if(i%6 < 3){
-          setServo(15,-15);
+        else if(i>=140 && i<190)
+        {
+          //turn=0;
+          if(i%6 < 3)
+          {
+            setServo(15,-15);
           }
-          else{
-          setServo(-15,15);
+          else
+          {
+            setServo(-15,15);
           } 
         }
-        if(i>=190 && i<210){
-          turn=1;
+        else if(i>=190 && i<210)
+        {
+          //turn=1;
           setServo(-90,90);
         }
-        if(i>=210 && i<260){
-          turn=0;
-          if(i%6 < 3){
-          setServo(15,-15);
+        else if(i>=210 && i<260)
+        {
+          //turn=0;
+          if(i%6 < 3)
+          {
+            setServo(15,-15);
           }
-          else{
-          setServo(-15,15);
+          else
+          {
+            setServo(-15,15);
           } 
         }
-        if(i>=260 && i<280){
-          turn=1;
+        else if(i>=260 && i<280)
+        {
+          //turn=1;
           setServo(90,-90);
         }                                                                                
-                                      
+                             
         
         // Next State Logic in state 1
         if(i>150 || j<2){
         if(getProxDistance() <= 30 && getProxDistance() != -1 && turn != 1)
         {
          currentState = 2; 
-         printf("\tProximity Triggered (in Fear 1).\n");
+         print("\tProximity Triggered (in Fear 1).\n");
          b=1;
          break;
         }
         else if(getTimeSinceMic() <= 2.0) 
         {
          currentState = 3; 
-         printf("\t Mic Triggered (in Fear 1).\n");
+         print("\t Mic Triggered (in Fear 1).\n");
          b=1;
          break;
         }  
         else if(j<=0)
         {
           currentState=0;
-          printf("\t Timer Triggered (in Fear 1).\n");
+          print("\t Timer Triggered (in Fear 1).\n");
           b=1;
           break;
         }    
        }
-        //end of next state logic        
+       
+        //end of next state logic  
       }
       }
 
@@ -396,7 +544,7 @@ void FearFSM() {
     
     case 2:
       // Second Elevated State within Fear
-      printf("\tState2 Triggered (in Fear).\n");
+      print("\tState2 Triggered (in Fear).\n");
       // State Actions
       if (emotionalState != FEAR) return;
       
@@ -407,29 +555,32 @@ void FearFSM() {
         
         
       //Intermittent buzzer
-          random_f = (1+ (double)rand() / (double)RAND_MAX) ;
-         random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+      
+        // random_f = (1+ (double)rand() / (double)RAND_MAX) ;
+        // random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+        random_f = 1.5;
+        random_t = 1.5;
          freqout(PIN_BUZZER,(200*random_t) , (700*random_f));
          pause(800-(200*random_t));
     
-      // Next State Logic in fear state 2
+      // Next State Logic in fear state 2 
       if(i>2){
           if(getProxDistance() <= 30 && getProxDistance() != -1)
         {
          i=0;
-         printf("\tProximity Triggered (in Fear 2).\n");
+         print("\tProximity Triggered (in Fear 2).\n");
          break;
         }
         if(getTimeSinceMic() <= 2.0)
         {
          currentState = 3; 
-         printf("\t Mic Triggered (in Fear 2).\n");
+         print("\t Mic Triggered (in Fear 2).\n");
          break;
         }  
         else if(i>=12)
         {
           currentState=1;
-          printf("\t Timer Triggered (in Fear 2).\n");
+          print("\t Timer Triggered (in Fear 2).\n");
           break;
         }    
        } 
@@ -440,7 +591,7 @@ void FearFSM() {
     
     case 3:
       //Third Elevated State within Fear
-      printf("\tState3 Triggered (in Fear).\n");
+      print("\tState3 Triggered (in Fear).\n");
       //State actions
       if (emotionalState != FEAR) return;
       for(int i=0 ; i<30 ;i++){
@@ -455,8 +606,10 @@ void FearFSM() {
           setServo(150,150); 
         }
         //beeping
-        random_f = (1+ (double)rand() / (double)RAND_MAX) ;
-         random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+       // random_f = (1+ (double)rand() / (double)RAND_MAX) ;
+        // random_t = (1+ (double)rand() / (double)RAND_MAX) ;
+        random_f = 1.5;
+        random_t = 1.5;
          freqout(PIN_BUZZER,(200*random_t) , (700*random_f));
          pause(400-(200*random_t));                   
      
@@ -467,24 +620,24 @@ void FearFSM() {
         if(getTimeSinceMic() <= 2)
         {
          i=0; 
-         printf("\t Mic Triggered (in Fear 3).\n");
+         print("\t Mic Triggered (in Fear 3).\n");
          break;
         }  
         else if(i>=24)
         {
           currentState=1;
-          printf("\t Timer Triggered (in Fear 3).\n");
+          print("\t Timer Triggered (in Fear 3).\n");
           break;
         }    
        }
       //end of next state logic
     }      
-    break; */
+    break; 
     //closing of switch and fearFSM below:
-  }    
+  } 
 }
 
-
+*/
 
 void SadnessFSM() {
   print("Sadness Emotion Started (State=%d)\n", currentState);
@@ -520,7 +673,7 @@ void SadnessFSM() {
         if(getTimeSinceMic() <= 2)
         {
           currentState = 1; 
-          printf("\tMicrophone Triggered (in Sadness).\n");
+          print("\tMicrophone Triggered (in Sadness).\n");
           break;
         }
         count++;
@@ -558,7 +711,7 @@ void SadnessFSM() {
         if(getProxDistance() <= 20 && getProxDistance() != -1)
         {
           currentState = 2;
-          printf("\tUltrasonic Triggered (in Sadness).\n");
+          print("\tUltrasonic Triggered (in Sadness).\n");
           break;
         }
       }        
@@ -573,7 +726,7 @@ void SadnessFSM() {
       
       setServo(0, 0);
       
-      for(int i = 0; i <= 8; i++)
+      for(int i = 0; i <= 5; i++)
       {
         if (emotionalState != SADNESS) return;
         
@@ -600,11 +753,11 @@ void SadnessFSM() {
       
       
       setServo(30, -30);
-      pause(2500);
+      pause(4500);
       setServo(25, 25);
       pause(timesad);
       setServo(-30, 30);
-      pause(2500);
+      pause(4500);
       currentState = 0;
       break;
   }  
@@ -615,7 +768,7 @@ void LoveFSM() {
   print("Love Emotion Started (State=%d)\n", currentState);
   
   // Set the pulse eye colors
-  int r1 = 128, g1 = 0, b1 = 128;
+  int r1 = 80, g1 = 0, b1 = 80;
   int r2 = 255, g2 = 160, b2 = 202;
   float colorChangePeriod; // ms (transition time, full period)
   int defaultEyebrowAngle = -200;
@@ -638,12 +791,12 @@ void LoveFSM() {
         
         // Check Next State
         if (getTiltStatus()) {
-          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          print("\tTilt Sensor Triggered (Into State 2)\n");
           currentState = 2;
           break;
         }   
         else if (getProxDistance() < 30) {
-          printf("\tProx Sensor Triggered (Into State 1)\n");
+          print("\tProx Sensor Triggered (Into State 1)\n");
           currentState = 1;
           break;
         }
@@ -657,12 +810,12 @@ void LoveFSM() {
         
         // Check Next State
         if (getTiltStatus()) {
-          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          print("\tTilt Sensor Triggered (Into State 2)\n");
           currentState = 2;
           break;
         }   
         else if (getProxDistance() < 30) {
-          printf("\tProx Sensor Triggered (Into State 1)\n");
+          print("\tProx Sensor Triggered (Into State 1)\n");
           currentState = 1;
           break;
         }
@@ -681,12 +834,12 @@ void LoveFSM() {
         
         // Check Next State
         if (getTiltStatus()) {
-          printf("\tTilt Sensor Triggered (Into State 2)\n");
+          print("\tTilt Sensor Triggered (Into State 2)\n");
           currentState = 2;
           break;
         }  
         else if (getProxDistance() < 30) {
-          printf("\tProx Sensor Triggered (Into State 1)\n");
+          print("\tProx Sensor Triggered (Into State 1)\n");
           currentState = 1;
           break;
         } 
@@ -702,9 +855,9 @@ void LoveFSM() {
       // Run toward object and nudge it
       
       // Run forward up to 4s, or until it hits hand
-      printf("\tForward up to 4s or until prox<5. Prox: ");
+      print("\tForward up to 4s or until prox<5. Prox: ");
       for (int i = 0; i < 10 && getProxDistance() > 10 && getProxDistance() < 30; i++) {
-        printf("%f,", getProxDistance());
+        print("%f,", getProxDistance());
         setServo(60, 60);
         pause(400);
         
@@ -713,13 +866,14 @@ void LoveFSM() {
           return;
         }   
       }
-      printf("\n");
+      print("\n");
       
       // Make it go forward just a little more to nudge
       setServo(30, 30);
       pause(800);
       
       // Make it go side to side (cuddle nudge)
+      setEyeColors(128, 0, 128);
       for (int i = 0; i < 4; i++) {
         setServo(40, -40);
         //pause(200);
@@ -734,7 +888,7 @@ void LoveFSM() {
       
       // Back up for 1s
       if (getProxDistance() < 30) {
-        printf("\tBackwards 1s.\n");
+        print("\tBackwards 1s.\n");
         setServo(-40, -40);
         pause(1000);
       }        
@@ -802,7 +956,7 @@ void LoveFSM() {
       
       // Check if the history contains some negative and positive tilt values (indicating rocking)
       if (gyroRockCount > gyroRockThreshold) {
-        printf("\tGyro rocked greater than %d times.\n", gyroRockThreshold);
+        print("\tGyro rocked greater than %d times.\n", gyroRockThreshold);
         currentState = 3;
       }
       
@@ -842,7 +996,7 @@ void LoveFSM() {
       
       // Next State
       if (gyroRockCount == 0 && !getTiltStatus()) {
-        printf("\tRobot set down.\n");
+        print("\tRobot set down.\n");
         currentState = 0;
       }       
       
@@ -858,19 +1012,19 @@ void LoveFSM() {
 void TestFSM() {
   // Test Mode for Testing IO Devices
   
-  printf("Test Mode Started.\n");
+  print("Test Mode Started.\n");
   
   switch (currentState) {
   
     // Gyro Testing
     case 0:
-    printf("Gyroscope Test:\n");
+    print("Gyroscope Test:\n");
       for (int i = 0; i < 5; i++) {
-        printf("\tTry tilting robot. Current Gyroscope Result: ");
+        print("\tTry tilting robot. Current Gyroscope Result: ");
         if (getTiltStatus())
-          printf("Tilted.\n");
+          print("Tilted.\n");
         else
-          printf("Not Tilted.\n");
+          print("Not Tilted.\n");
           
         pause(1000);
       }
@@ -878,27 +1032,27 @@ void TestFSM() {
     
     case 1:  
       // Microphone Testing
-      printf("Microphone Test:\n");
+      print("Microphone Test:\n");
       for (int i = 0; i < 5; i++) {
-        printf("\tMake loud noise. Time since last microphone trigger: %fs.\n", getTimeSinceMic());
+        print("\tMake loud noise. Time since last microphone trigger: %fs.\n", getTimeSinceMic());
         pause(2000);
       }
     break;
     
     case 2:
       // Prox Sensor Testing
-      printf("Proximity Sensor Test:\n");
+      print("Proximity Sensor Test:\n");
       for (int i = 0; i < 5; i++) {
-        printf("\tGet near proximity sensor.  Distance to object: %fcm.\n", getProxDistance());
+        print("\tGet near proximity sensor.  Distance to object: %fcm.\n", getProxDistance());
         pause(2000);
       }        
     break;
     
     case 3:
       // RGB LED Output Testing
-      printf("RGB LED Test:\n");
+      print("RGB LED Test:\n");
       
-      printf("\tStarting RED Test from 0 to Full to 0.\n");
+      print("\tStarting RED Test from 0 to Full to 0.\n");
       for (int i = 0; i <= 255; i++) {
         setEyeColors(i, 0, 0);
         pause(10);
@@ -908,7 +1062,7 @@ void TestFSM() {
         pause(10);
       }
               
-      printf("\tStarting GREEN Test from 0 to Full to 0.\n");
+      print("\tStarting GREEN Test from 0 to Full to 0.\n");
       for (int i = 0; i <= 255; i++) {
         setEyeColors(0, i, 0);
         pause(10);
@@ -918,7 +1072,7 @@ void TestFSM() {
         pause(10);
       }
               
-      printf("\tStarting BLUE Test from 0 to Full to 0.\n");
+      print("\tStarting BLUE Test from 0 to Full to 0.\n");
       for (int i = 0; i <= 255; i++) {
         setEyeColors(0, 0, i);
         pause(10);
@@ -934,19 +1088,19 @@ void TestFSM() {
     
     case 4:
       // Servo Testing
-      printf("Servo Test:\n");
+      print("Servo Test:\n");
       
-      printf("\tTesting Eyebrows: -90 Degress, wait 1 second.\n");
+      print("\tTesting Eyebrows: -90 Degress, wait 1 second.\n");
       setEyebrowAngle(-900, -900);
       pause(1000);
-      printf("\tTesting Eyebrows: +90 Degress, wait 1 second.\n");
+      print("\tTesting Eyebrows: +90 Degress, wait 1 second.\n");
       setEyebrowAngle(900, 900);
       pause(1000);
       
-      printf("\tTesting Drive Servos: Full Speed Forwards for 1 second.");
+      print("\tTesting Drive Servos: Full Speed Forwards for 1 second.");
       setServo(100, 100);
       pause(1000);
-      printf("\tTesting Drive Servos: Full Speed Backwards for 1 second.");
+      print("\tTesting Drive Servos: Full Speed Backwards for 1 second.");
       setServo(-100, -100);
       pause(1000);
       
@@ -956,7 +1110,7 @@ void TestFSM() {
     
     case 5:
       // Buzzer Testing
-      printf("\tBuzzer Testing with Increasing Frequencies (100 to 4000) for 300ms.\n");
+      print("\tBuzzer Testing with Increasing Frequencies (100 to 4000) for 300ms.\n");
       for (int freq = 100; freq <= 4000; freq += 100)
         freqout(PIN_BUZZER, 300, freq);
         
@@ -1027,11 +1181,27 @@ void IRSensorCog()
       }     
     
     }
-  }    
+    
+    // Check Button State
+    if (input(PIN_BUTTON)) {
+      emotionalState = (emotionalState + 1) % 5;
+      
+      resetOutputs();
+      
+      pause(500); // stupid person debouncing
+    }            
+    
+  }   // end while 
 }  
 
 void resetOutputs()
 {
+  pause(100);
+  setServo(0,0);
+  setEyebrowAngle(0,0);
+  setEyeColors(0,0,0);
+  
+  pause(100);
   setServo(0,0);
   setEyebrowAngle(0,0);
   setEyeColors(0,0,0);
@@ -1057,19 +1227,19 @@ float getTimeSinceMic() {
   // Returns the number of seconds since the microphone was last triggered
   return mstime_get()/1000.0 - micLastTrig; // current time - mic last trig time
 }
-
+/*
 int getMicStatus()
 {
   //Mic code here
   }
-
+*/
 // Output Functions
 void setServo(int leftSpeed, int rightSpeed) 
 {
   servo_speed(SERVO_DRIVE_L, leftSpeed);
   servo_speed(SERVO_DRIVE_R, -rightSpeed);
 }
-
+/*
 void setVibration()
 {
   setServo(100, -100);
@@ -1077,7 +1247,7 @@ void setVibration()
   setServo(-100,100);
   pause (100);
  
-  }
+}*/
 void setEyebrowAngle(int leftEye, int rightEye)
 { 
   // Arguments take angle from -900 to 900
@@ -1120,7 +1290,7 @@ void gyroLoggingCog() {
    while (1) {
      // Read the Values
      dscan(gyroSerial, "%f,%f,%f,%f", &gyroX, &gyroY, &gyroZ, &gyroT);
-     //printf("\tRead Gyro: %f,%f,%f,%f", gyroX, gyroY, gyroZ, gyroT); // Run from cog, will fail
+     //print("\tRead Gyro: %f,%f,%f,%f", gyroX, gyroY, gyroZ, gyroT); // Run from cog, will fail
 
      // Shift Values in Array Right
      for (int i = GYRO_HISTORY_COUNT-1; i > 0; i--) {
@@ -1156,9 +1326,9 @@ void gyroLoggingCog() {
       
       // Debug Printing for Gyro Rocking Sensing
       /*
-      printf("\tGyroXHistory: ");
-      for (int i = 0; i < GYRO_HISTORY_COUNT; i++) printf("%f,", gyroXHistory[i]);
-      printf("\n\tGyro Count: %d\n", gyroRockCount);     
+      print("\tGyroXHistory: ");
+      for (int i = 0; i < GYRO_HISTORY_COUNT; i++) print("%f,", gyroXHistory[i]);
+      print("\n\tGyro Count: %d\n", gyroRockCount);     
       */
         
    
@@ -1197,7 +1367,7 @@ void micCog() {
     maxPkPk = max - min;
     
     if (maxPkPk > micThresholdPk) {
-      //printf("NEW MICROPHONE TRIGGER, pk-pk=%f\n", maxPkPk); // should fail because inside cog
+      //print("NEW MICROPHONE TRIGGER, pk-pk=%f\n", maxPkPk); // should fail because inside cog
       micLastTrig = mstime_get()/1000.0; // set time to the current trigger time
       
     }    

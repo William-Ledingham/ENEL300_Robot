@@ -16,8 +16,8 @@
 
 #define SERVO_DRIVE_L 12
 #define SERVO_DRIVE_R 14
-#define SERVO_EYEBROW_L 16
-#define SERVO_EYEBROW_R 17
+#define SERVO_EYEBROW_L 17
+#define SERVO_EYEBROW_R 16
 
 #define PIN_PROX_TRIG 3
 #define PIN_PROX_ECHO 4
@@ -27,11 +27,15 @@
 // Gyro: Green to +3.3v, Blue to GND
 // Gyro must be connected for program to function
 
+#define PIN_BUTTON 8 
+// 
+
 #define PIN_BUZZER 10
 
 #define PIN_MIC_AD 2
 // Connect AUD to PIN_MIC_AD, Vcc to 3.3v, GND to GND
 
+#define RAND_MAX 500
 
 /* Other Macros ------------------------------------*/
 #define GYRO_HISTORY_COUNT 20 // stores 20 values / 4 values per sec = 5 seconds
